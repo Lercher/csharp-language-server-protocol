@@ -9,7 +9,7 @@ using Lsp.Models;
 using Lsp.Protocol;
 
 namespace SampleServer
-{
+{    
     class Program
     {
         static void Main(string[] args)
@@ -29,6 +29,7 @@ namespace SampleServer
             server.AddHandler(new TextDocumentHandler(server));
 
             await server.Initialize();
+            server.LogMessage(new LogMessageParams() { Type = MessageType.Info, Message = string.Format("Sample Server initialized - In enc {0}, out enc {1}", Console.InputEncoding.EncodingName, Console.OutputEncoding.EncodingName) });
 
             await new TaskCompletionSource<object>().Task;
         }
@@ -90,6 +91,7 @@ namespace SampleServer
                 Type = MessageType.Log,
                 Message = "Hello World!!!!"
             });
+            await Task.CompletedTask;
         }
 
         TextDocumentRegistrationOptions IRegistration<TextDocumentRegistrationOptions>.GetRegistrationOptions()
