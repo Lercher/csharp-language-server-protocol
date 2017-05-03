@@ -46,7 +46,7 @@ namespace Lsp.Models
         }
 
         /// <summary>
-        /// does the document filter contains a paattern
+        /// does the document filter contain a pattern
         /// </summary>
         [JsonIgnore]
         public bool HasPattern => Pattern != null;
