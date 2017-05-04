@@ -161,7 +161,7 @@ namespace Lsp
                 _initializeComplete.SetResult(result);
             }
 
-            return result;
+            return await Task.FromResult(result);
         }
 
         public Task Handle()
