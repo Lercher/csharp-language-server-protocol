@@ -43,6 +43,7 @@ namespace JsonRpc
                 if (_queue.TryTake(out var value, -1, token))
                 {
                     var content = JsonConvert.SerializeObject(value);
+                    Tracer.Do(tw => tw.WriteLine("<--OUT-- {0}", content));
 
                     // TODO: Is this lsp specific??
                     var sb = new StringBuilder();

@@ -25,11 +25,15 @@ namespace SampleServer
             //}
 
             var server = new LanguageServer(Console.In, Console.Out);
+            JsonRpc.Tracer.Connect(Console.Error);
 
             server.AddHandler(new TextDocumentHandler(server));
 
             await server.Initialize();
             server.LogMessage(new LogMessageParams() { Type = MessageType.Info, Message = string.Format("Sample Server initialized - In enc {0}, out enc {1}", Console.InputEncoding.EncodingName, Console.OutputEncoding.EncodingName) });
+
+            await Task.Delay(TimeSpan.FromSeconds(30));
+            server.LogMessage(new LogMessageParams() { Type = MessageType.Info, Message = "30s passed" });
 
             await new TaskCompletionSource<object>().Task;
         }

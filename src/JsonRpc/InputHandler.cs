@@ -116,6 +116,7 @@ namespace JsonRpc
             try
             {
                 payload = JToken.Parse(request);
+                Tracer.Do(tw => tw.WriteLine("---IN--> {0}", payload));
             }
             catch
             {
