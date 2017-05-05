@@ -14,7 +14,6 @@ namespace JsonRpc
 {
     public class InputHandler : IInputHandler
     {
-        private readonly TimeSpan _sleepTime = TimeSpan.FromMilliseconds(50);
         public const char CR = '\r';
         public const char LF = '\n';
         public static char[] CRLF = { CR, LF };
@@ -28,7 +27,8 @@ namespace JsonRpc
         private Thread _inputThread;
         private readonly IRequestRouter _requestRouter;
         private readonly IResponseRouter _responseRouter;
-        private readonly ConcurrentQueue<(RequestProcessType type, Func<Task> request)> _queue;
+        private readonly BlockingCollection<(RequestProcessType type, Func<Task> request)> _queue;
+        private readonly CancellationTokenSource _cancelQueue;
         private Thread _queueThread;
 
         public InputHandler(
@@ -46,24 +46,12 @@ namespace JsonRpc
             _requestProcessIdentifier = requestProcessIdentifier;
             _requestRouter = requestRouter;
             _responseRouter = responseRouter;
-            _queue = new ConcurrentQueue<(RequestProcessType type, Func<Task> request)>();
+            _queue = new BlockingCollection<(RequestProcessType type, Func<Task> request)>();
+            _cancelQueue = new CancellationTokenSource();
 
             _inputThread = new Thread(ProcessInputStream) { IsBackground = true };
 
             _queueThread = new Thread(ProcessRequestQueue) { IsBackground = true };
-        }
-
-        internal InputHandler(
-            TextReader input,
-            IOutputHandler outputHandler,
-            IReciever reciever,
-            IRequestProcessIdentifier requestProcessIdentifier,
-            IRequestRouter requestRouter,
-            IResponseRouter responseRouter,
-            TimeSpan sleepTime
-        ) : this(input, outputHandler, reciever, requestProcessIdentifier, requestRouter, responseRouter)
-        {
-            _sleepTime = sleepTime;
         }
 
         public void Start()
@@ -158,7 +146,7 @@ namespace JsonRpc
             {
                 if (item.IsRequest)
                 {
-                    _queue.Enqueue((
+                    _queue.Add((
                         type,
                         async () => {
                             var result = await _requestRouter.RouteRequest(item.Request);
@@ -169,7 +157,7 @@ namespace JsonRpc
                 }
                 else if (item.IsNotification)
                 {
-                    _queue.Enqueue((
+                    _queue.Add((
                         type,
                         () => {
                             _requestRouter.RouteNotification(item.Notification);
@@ -185,33 +173,36 @@ namespace JsonRpc
             }
         }
 
-        private bool IsNextSerial()
+        private Task Start(Func<Task> request)
         {
-            return _queue.TryPeek(out var queueResult) && queueResult.type == RequestProcessType.Serial;
+            var t = request();
+            t.Start();
+            return t;
         }
 
         private async void ProcessRequestQueue()
         {
-            while (true)
+            // see https://github.com/OmniSharp/csharp-language-server-protocol/issues/4
+            var token = _cancelQueue.Token;
+            var waitables = new List<Task>();
+            while(true)
             {
                 if (_queueThread == null) return;
-                var items = new List<Func<Task>>();
-                while (!_queue.IsEmpty)
+                if (_queue.TryTake(out var item, Timeout.Infinite, token))
                 {
-                    if (IsNextSerial() && items.Count > 0)
+                    var (type, request) = item;
+                    if (type == RequestProcessType.Serial)
                     {
-                        break;
+                        await Task.WhenAll(waitables);
+                        waitables.Clear();
+                        await Start(request);
                     }
-
-                    if (_queue.TryDequeue(out var queueResult))
-                        items.Add(queueResult.request);
-                }
-
-                await Task.WhenAll(items.Select(x => x()));
-
-                if (_queue.IsEmpty)
-                {
-                    await Task.Delay(_sleepTime);
+                    else if (type == RequestProcessType.Parallel)
+                    {
+                        waitables.Add(Start(request));
+                    }
+                    else
+                        throw new NotImplementedException("Only Serial and Parallel execution types can be handled currently");
                 }
             }
         }
@@ -221,6 +212,7 @@ namespace JsonRpc
             _outputHandler.Dispose();
             _inputThread = null;
             _queueThread = null;
+            _cancelQueue.Cancel();
         }
     }
 }
