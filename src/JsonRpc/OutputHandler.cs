@@ -57,11 +57,13 @@ namespace JsonRpc
                     }
                 }
             }
-            catch (OperationCanceledException ex) {
+            catch (OperationCanceledException ex)
+            {
                 if (ex.CancellationToken != token)
                     throw;
                 // else ignore. Exceptions: OperationCanceledException - The CancellationToken has been canceled.
-            } finally { _cancel.Dispose(); }
+            }
+            finally { _cancel.Dispose(); }
         }
 
         public void Dispose()
