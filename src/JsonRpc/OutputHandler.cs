@@ -37,23 +37,33 @@ namespace JsonRpc
         private void ProcessOutputQueue()
         {
             var token = _cancel.Token;
-            while (true)
+            try
             {
-                if (_thread == null) return;
-                if (_queue.TryTake(out var value, Timeout.Infinite, token))
+                while (true)
                 {
-                    var content = JsonConvert.SerializeObject(value);
-                    Tracer.Do(tw => tw.WriteLine(">--OUT-> {0}", JsonConvert.SerializeObject(value, Formatting.Indented)));
+                    if (_thread == null) return;
+                    if (_queue.TryTake(out var value, Timeout.Infinite, token))
+                    {
+                        var content = JsonConvert.SerializeObject(value);
 
-                    // TODO: Is this lsp specific??
-                    var sb = new StringBuilder();
-                    sb.Append($"Content-Length: {content.Length}\r\n");
-                    sb.Append($"\r\n");
-                    sb.Append(content);
+                        Tracer.Do(tw => tw.WriteLine(">--OUT-> {0}", JsonConvert.SerializeObject(value, Formatting.Indented)));
+                        // TODO: Is this lsp specific??
+                        var sb = new StringBuilder();
+                        sb.Append($"Content-Length: {content.Length}\r\n");
+                        sb.Append($"\r\n");
+                        sb.Append(content);
 
-                    _output.Write(sb.ToString());
+                        _output.Write(sb.ToString());
+                    }
                 }
             }
+            catch (OperationCanceledException ex)
+            {
+                if (ex.CancellationToken != token)
+                    throw;
+                // else ignore. Exceptions: OperationCanceledException - The CancellationToken has been canceled.
+            }
+            finally { _cancel.Dispose(); }
         }
 
         public void Dispose()
