@@ -37,6 +37,26 @@ namespace JsonRpc
             return t;
         }
 
+        private List<Task> RemoveCompleteTasks(List<Task> list)
+        {
+            if (list.Count == 0) return list;
+
+            var result = new List<Task>();
+            foreach(var t in list)
+            {
+                if (t.IsFaulted)
+                {
+                    // TODO: Handle Fault
+                }
+                else if (!t.IsCompleted)
+                {
+                    result.Add(t);
+                }
+            }
+            return result;
+        }
+
+        public long _TestOnly_NonCompleteTaskCount = 0;
         private void ProcessRequestQueue()
         {
             // see https://github.com/OmniSharp/csharp-language-server-protocol/issues/4
@@ -53,7 +73,6 @@ namespace JsonRpc
                         if (type == RequestProcessType.Serial)
                         {
                             Task.WaitAll(waitables.ToArray(), token);
-                            waitables.Clear();
                             Start(request).Wait(token);
                         }
                         else if (type == RequestProcessType.Parallel)
@@ -62,6 +81,8 @@ namespace JsonRpc
                         }
                         else
                             throw new NotImplementedException("Only Serial and Parallel execution types can be handled currently");
+                        waitables = RemoveCompleteTasks(waitables);
+                        Interlocked.Exchange(ref _TestOnly_NonCompleteTaskCount, waitables.Count);
                     }
                 }
             }
@@ -71,18 +92,21 @@ namespace JsonRpc
                     throw;
                 // OperationCanceledException - The CancellationToken has been canceled.
                 Task.WaitAll(waitables.ToArray(), TimeSpan.FromMilliseconds(1000));
-                waitables.ForEach((t) =>
+                var keeponrunning = RemoveCompleteTasks(waitables);
+                Interlocked.Exchange(ref _TestOnly_NonCompleteTaskCount, keeponrunning.Count);
+                keeponrunning.ForEach((t) =>
                 {
-                    if (!t.IsCompleted) {
-                        // TODO: There is no way to abort a Task. As we don't construct the tasks, we can do nothing here
-                        // Option is: change the task factory "Func<Task> request" to a "Func<CancellationToken, Task> request"
-                    }
+                    // TODO: There is no way to abort a Task. As we don't construct the tasks, we can do nothing here
+                    // Option is: change the task factory "Func<Task> request" to a "Func<CancellationToken, Task> request"
                 });
             }
         }
 
+        private bool _disposed = false;
         public void Dispose()
         {
+            if (_disposed) return;
+            _disposed = true;
             _cancel.Cancel();
             _thread.Join();
             _cancel.Dispose();
