@@ -25,16 +25,13 @@ namespace SampleServer
             //}
 
             Tracer.Connect(Console.Error);
-            Tracer.Deactivate(new int[] {});
+            Tracer.Deactivate(new int[] {1, 2});
             var server = new LanguageServer(Console.In, Console.Out);
 
             server.AddHandler(new TextDocumentHandler(server));
 
             await server.Initialize();
             server.LogMessage(new LogMessageParams() { Type = MessageType.Info, Message = string.Format("Sample Server initialized - In enc {0}, out enc {1}", Console.InputEncoding.EncodingName, Console.OutputEncoding.EncodingName) });
-
-            await Task.Delay(TimeSpan.FromSeconds(30));
-            server.LogMessage(new LogMessageParams() { Type = MessageType.Info, Message = "30s passed" });
 
             await new TaskCompletionSource<object>().Task;
         }
@@ -70,13 +67,10 @@ namespace SampleServer
             OpenClose = true
         };
 
-        public Task Handle(DidChangeTextDocumentParams notification)
+        public async Task Handle(DidChangeTextDocumentParams notification)
         {
-            _router.LogMessage(new LogMessageParams() {
-                Type = MessageType.Log,
-                Message = "DidChangeTextDocumentParams"
-            });
-            return Task.CompletedTask;
+            _router.LogMessage("DidChangeTextDocumentParams");
+            await Task.CompletedTask;
         }
 
         TextDocumentChangeRegistrationOptions IRegistration<TextDocumentChangeRegistrationOptions>.GetRegistrationOptions()
@@ -94,10 +88,7 @@ namespace SampleServer
 
         public async Task Handle(DidOpenTextDocumentParams notification)
         {
-            _router.LogMessage(new LogMessageParams() {
-                Type = MessageType.Log,
-                Message = "DidOpenTextDocumentParams"
-            });
+            _router.LogMessage("DidOpenTextDocumentParams");
             await Task.CompletedTask;
         }
 
@@ -110,11 +101,13 @@ namespace SampleServer
 
         public Task Handle(DidCloseTextDocumentParams notification)
         {
+            _router.LogMessage("DidCloseTextDocumentParams");
             return Task.CompletedTask;
         }
 
         public Task Handle(DidSaveTextDocumentParams notification)
         {
+            _router.LogMessage("DidSaveTextDocumentParams");
             return Task.CompletedTask;
         }
 
@@ -125,8 +118,10 @@ namespace SampleServer
                 IncludeText = Options.Save.IncludeText
             };
         }
+
         public TextDocumentAttributes GetTextDocumentAttributes(Uri uri)
         {
+            _router.LogMessage("GetTextDocumentAttributes " + uri.ToString());
             return new TextDocumentAttributes(uri, "plaintext");
         }
     }
