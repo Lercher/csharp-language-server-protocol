@@ -34,7 +34,7 @@ namespace SampleServer
             var fn = System.IO.Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetEntryAssembly().Location);
             server.LogMessage(string.Format("{2} initialized. Encodings: In {0}, out {1}.", Console.InputEncoding.EncodingName, Console.OutputEncoding.EncodingName, fn));
 
-            await new TaskCompletionSource<object>().Task;
+            await server.WasShutDown;
         }
     }
 
