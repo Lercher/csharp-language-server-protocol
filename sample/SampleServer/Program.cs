@@ -24,8 +24,8 @@ namespace SampleServer
             //    await Task.Delay(100);
             //}
 
-            var server = new LanguageServer(Console.In, Console.Out);
             JsonRpc.Tracer.Connect(Console.Error);
+            var server = new LanguageServer(Console.In, Console.Out);
 
             server.AddHandler(new TextDocumentHandler(server));
 
@@ -45,8 +45,10 @@ namespace SampleServer
 
         private readonly DocumentSelector _documentSelector = new DocumentSelector(
             new DocumentFilter() {
-                Pattern = "**/*.csproj",
-                Language = "xml"
+                Pattern = "**/*",
+                Language = "plaintext"
+                //Pattern = "**/*.csproj",
+                //Language = "xml"
             }
         );
 
@@ -71,7 +73,7 @@ namespace SampleServer
         {
             _router.LogMessage(new LogMessageParams() {
                 Type = MessageType.Log,
-                Message = "Hello World!!!!"
+                Message = "DidChangeTextDocumentParams"
             });
             return Task.CompletedTask;
         }
@@ -93,7 +95,7 @@ namespace SampleServer
         {
             _router.LogMessage(new LogMessageParams() {
                 Type = MessageType.Log,
-                Message = "Hello World!!!!"
+                Message = "DidOpenTextDocumentParams"
             });
             await Task.CompletedTask;
         }
@@ -124,7 +126,7 @@ namespace SampleServer
         }
         public TextDocumentAttributes GetTextDocumentAttributes(Uri uri)
         {
-            return new TextDocumentAttributes(uri, "csharp");
+            return new TextDocumentAttributes(uri, "plaintext");
         }
     }
 }
