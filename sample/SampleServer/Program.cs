@@ -31,7 +31,8 @@ namespace SampleServer
             server.AddHandler(new TextDocumentHandler(server));
 
             await server.Initialize();
-            server.LogMessage(new LogMessageParams() { Type = MessageType.Info, Message = string.Format("Sample Server initialized - In enc {0}, out enc {1}", Console.InputEncoding.EncodingName, Console.OutputEncoding.EncodingName) });
+            var fn = System.IO.Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetEntryAssembly().Location);
+            server.LogMessage(string.Format("{2} initialized. Encodings: In {0}, out {1}.", Console.InputEncoding.EncodingName, Console.OutputEncoding.EncodingName, fn));
 
             await new TaskCompletionSource<object>().Task;
         }
