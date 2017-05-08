@@ -43,7 +43,7 @@ namespace JsonRpc
                     {
                         var content = JsonConvert.SerializeObject(value);
 
-                        Tracer.Do(tw => tw.WriteLine(">--OUT-> {0}", JsonConvert.SerializeObject(value, Formatting.Indented)));
+                        Tracer.Do(2, tw => tw.WriteLine(">--OUT-> {0}", JsonConvert.SerializeObject(value, Formatting.Indented)));
                         // TODO: Is this lsp specific??
                         var sb = new StringBuilder();
                         sb.Append($"Content-Length: {content.Length}\r\n");

@@ -24,7 +24,8 @@ namespace SampleServer
             //    await Task.Delay(100);
             //}
 
-            JsonRpc.Tracer.Connect(Console.Error);
+            Tracer.Connect(Console.Error);
+            Tracer.Deactivate(new int[] {});
             var server = new LanguageServer(Console.In, Console.Out);
 
             server.AddHandler(new TextDocumentHandler(server));

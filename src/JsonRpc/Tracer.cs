@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace JsonRpc
 {
@@ -8,6 +10,7 @@ namespace JsonRpc
     {
         private static TextWriter tw = null;
         private static Stopwatch sw;
+        private static ISet<int> deactivated = new HashSet<int>();
 
         public static void Connect(Stream channel)
         {
@@ -20,9 +23,15 @@ namespace JsonRpc
             sw = Stopwatch.StartNew();
         }
 
-        public static void Do(Action<TextWriter> writeLineAction)
+        public static void Deactivate(IEnumerable<int> list)
         {
-            if (tw != null && writeLineAction != null)
+            foreach (var i in list)
+                deactivated.Add(i);
+        }
+
+        public static void Do(int i, Action<TextWriter> writeLineAction)
+        {
+            if (tw != null && writeLineAction != null && !deactivated.Contains(i))
             {
                 tw.Write(sw.Elapsed.ToString());
                 writeLineAction.Invoke(tw);
