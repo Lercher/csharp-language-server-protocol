@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using JsonRpc;
 using Lsp;
@@ -41,6 +42,9 @@ namespace SampleServer
     class TextDocumentHandler : ITextDocumentSyncHandler
     {
         private readonly ILanguageServer _router;
+        private string sourcecode;
+        private WFModel.Scanner scanner;
+        private WFModel.Parser parser;
 
         private readonly DocumentSelector _documentSelector = new DocumentSelector(
             new DocumentFilter() {
@@ -58,6 +62,70 @@ namespace SampleServer
             _router = router;
         }
 
+        private static IEnumerable<string> LinesOf(string s)
+        {
+            using (var sr = new System.IO.StringReader(s))
+                while(true)
+                {
+                    var line = sr.ReadLine();
+                    if (line == null)
+                        break;
+                    yield return line;
+                }
+        }
+
+        private static long PosOf(long LineNumber, string[] Lines, int WithLineEndingSize)
+        {
+            var pos = 0L;
+            for (var i = 0; i < LineNumber && i < Lines.Length; i++)
+                pos += (Lines[i].Length + WithLineEndingSize);
+            return pos;
+        }
+
+        private static long PosOf(Position p, string[] lines)
+        {
+            return p.Character + PosOf(p.Line, lines, 2);
+        }
+
+        private static string ApplyChanges(string sourcecode, Container<TextDocumentContentChangeEvent> contentChanges)
+        {
+            var sb = new System.Text.StringBuilder(sourcecode);
+            var lines = LinesOf(sourcecode).ToArray();
+            var qy =
+                from item in contentChanges
+                orderby item.Range.Start descending
+                select item;
+            foreach (var c in qy)
+            {
+                var start = (int) PosOf(c.Range.Start, lines);
+                var end = (int) PosOf(c.Range.End, lines);
+                sb.Remove(start, end - start);
+                sb.Insert(start, c.Text);
+            }
+            return sb.ToString();
+        }
+
+        void Parse(string text)
+        {
+            lock (this)
+            {
+                sourcecode = text;
+                var b = System.Text.Encoding.UTF8.GetBytes(sourcecode);
+                var sb = new System.Text.StringBuilder();
+
+                using (var w = new System.IO.StringWriter(sb))
+                using (var s = new System.IO.MemoryStream(b))
+                {
+                    scanner = new WFModel.Scanner(s, true); // it's BOM free but UTF8
+                    parser = new WFModel.Parser(scanner);
+                    parser.errors.errorStream = w;
+                    parser.Parse();
+                    w.WriteLine("\n{0:n0} error(s) detected", parser.errors.count);
+                }
+                _router.LogMessage(sb.ToString());
+            }
+        }
+
         public TextDocumentSyncOptions Options { get; } = new TextDocumentSyncOptions() {
             WillSaveWaitUntil = false,
             WillSave = true,
@@ -71,6 +139,8 @@ namespace SampleServer
         public async Task Handle(DidChangeTextDocumentParams notification)
         {
             _router.LogMessage("DidChangeTextDocumentParams");
+            var newsource = ApplyChanges(sourcecode, notification.ContentChanges);
+            Parse(newsource);
             await Task.CompletedTask;
         }
 
@@ -89,7 +159,8 @@ namespace SampleServer
 
         public async Task Handle(DidOpenTextDocumentParams notification)
         {
-            _router.LogMessage("DidOpenTextDocumentParams");
+            _router.LogMessage("DidOpenTextDocumentParams ");
+            Parse(notification.TextDocument.Text);
             await Task.CompletedTask;
         }
 
