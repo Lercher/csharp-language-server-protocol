@@ -27,13 +27,13 @@ namespace SampleServer
 
             Tracer.Connect(Console.Error);
             Tracer.Deactivate(new int[] {1, 2});
-            var server = new LanguageServer(Console.In, Console.Out);
+            var server = new LanguageServer(Console.OpenStandardInput(), Console.OpenStandardOutput());
 
             server.AddHandler(new TextDocumentHandler(server));
 
             await server.Initialize();
             var fn = System.IO.Path.GetFileNameWithoutExtension(System.Reflection.Assembly.GetEntryAssembly().Location);
-            server.LogMessage(string.Format("{2} initialized. Encodings: In {0}, out {1}.", Console.InputEncoding.EncodingName, Console.OutputEncoding.EncodingName, fn));
+            server.LogMessage(string.Format("{0} initialized.", fn));
 
             await server.WasShutDown;
         }
