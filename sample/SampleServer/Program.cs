@@ -84,23 +84,38 @@ namespace SampleServer
 
         private static long PosOf(Position p, string[] lines)
         {
+            if (p == null)
+                return 0L;
             return p.Character + PosOf(p.Line, lines, 2);
         }
 
         private static string ApplyChanges(string sourcecode, Container<TextDocumentContentChangeEvent> contentChanges)
         {
-            var sb = new System.Text.StringBuilder(sourcecode);
+            if (contentChanges == null || !contentChanges.Any())
+                return sourcecode;
+
+            // special case: a single contentChange item with no Range contains the full source
+            if (contentChanges.Count() == 1 && contentChanges.First().Range == null)
+                return contentChanges.First().Text;
+
             var lines = LinesOf(sourcecode).ToArray();
             var qy =
                 from item in contentChanges
-                orderby item.Range.Start descending
+                select new { 
+                    item.Text, 
+                    Start = (int)PosOf(item.Range?.Start, lines),
+                    End = (int)PosOf(item.Range?.End, lines)
+                };
+            var qy2 = 
+                from item in qy
+                orderby item.Start descending
                 select item;
-            foreach (var c in qy)
+
+            var sb = new System.Text.StringBuilder(sourcecode);
+            foreach (var c in qy2)
             {
-                var start = (int) PosOf(c.Range.Start, lines);
-                var end = (int) PosOf(c.Range.End, lines);
-                sb.Remove(start, end - start);
-                sb.Insert(start, c.Text);
+                sb.Remove(c.Start, c.End - c.Start);
+                sb.Insert(c.Start, c.Text);
             }
             return sb.ToString();
         }
