@@ -65,7 +65,6 @@ namespace JsonRpc
                 var buffer = new byte[300];
                 var current = await _input.ReadAsync(buffer, 0, MinBuffer);
                 if (current == 0) return; // no more _input
-
                 while (current < MinBuffer || 
                        buffer[current - 4] != CR || buffer[current - 3] != LF ||
                        buffer[current - 2] != CR || buffer[current - 1] != LF)
@@ -104,7 +103,8 @@ namespace JsonRpc
                         if (n == 0) return; // no more _input
                         received += n;
                     }
-                    var payload = System.Text.Encoding.UTF8.GetString(requestBuffer);
+                    // TODO sometimes: encoding should be based on the respective header (including the wrong "utf8" value)
+                    var payload = System.Text.Encoding.UTF8.GetString(requestBuffer); 
                     HandleRequest(payload);
                 }
             }

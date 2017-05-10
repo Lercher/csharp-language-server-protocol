@@ -10,7 +10,7 @@ namespace JsonRpc
     public class OutputHandler : IOutputHandler
     {
         private readonly Stream _output;
-        private Thread _thread;
+        private readonly Thread _thread;
         private readonly BlockingCollection<object> _queue;
         private readonly CancellationTokenSource _cancel;
 
