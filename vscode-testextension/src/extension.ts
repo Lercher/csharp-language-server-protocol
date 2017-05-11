@@ -10,19 +10,11 @@ import { workspace, Disposable, ExtensionContext, window } from 'vscode';
 import { LanguageClient, LanguageClientOptions, SettingMonitor, ServerOptions, TransportKind } from 'vscode-languageclient';
 
 export function activate(context: ExtensionContext) {
-
-    // The server is implemented in node
-    let serverDll = context.asAbsolutePath('../sample/SampleServer/bin/Debug/netcoreapp1.1/win7-x64/SampleServer.dll');
-    let run = { command: "dotnet.exe", args: [serverDll] };
-    window.setStatusBarMessage("starting " + serverDll + " ...");
-
-    // If the extension is launched in debug mode then the debug server options are used
-    // Otherwise the run options are used
-    let serverOptions: ServerOptions = { run : run, debug: run };
-
+    window.setStatusBarMessage("Coco/R Generic Language Server started", 2000); // hide after 2s
+    
     // Options to control the language client
     let clientOptions: LanguageClientOptions = {
-        // Register the server for plain text documents
+        // Register the server for plaintext documents named *.txt
         documentSelector: [{
             language: 'plaintext',
             pattern: '**/*.txt'
@@ -35,9 +27,12 @@ export function activate(context: ExtensionContext) {
         }
     }
 
+    // The server is implemented as a process with console StdIn/StdOut streams
+    let serverDll = context.asAbsolutePath('../sample/SampleServer/bin/Debug/netcoreapp1.1/win7-x64/SampleServer.dll');
+    let run = { command: "dotnet.exe", args: [serverDll] };
+
     // Create the language client and start the client.
-    let disposable = new LanguageClient('CocoR', 'Coco/R Language Server', serverOptions, clientOptions).start();
-    window.setStatusBarMessage(serverDll + " started", 5000); // hide after 5s
+    let disposable = new LanguageClient('Coco/R Generic', run, clientOptions).start();
 
     // Push the disposable to the context's subscriptions so that the
     // client can be deactivated on extension deactivation

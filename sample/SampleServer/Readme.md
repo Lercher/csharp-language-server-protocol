@@ -21,6 +21,6 @@ It is meant to be used with the vscode extension located in `vscode-testextensio
 * Hit F5, notice another vscode instance appearing, as it executes `Code.exe --debugBrkPluginHost=8680 --extensionDevelopmentPath=<your-Path>\vscode-testextension`
 * Optionally close vscode's welcome screen after checking the "Don't show me again" box
 * Hit Ctrl-Shift-U to open the output window
-* Select `Coco/R Language Server` from the drop down box, otherwise you won't see any logging
+* Select `Coco/R Generic` from the drop down box, otherwise you won't see any logging
 * Now open and modify the sample file `sample\SampleServer\WFModel\SampleWfModel.txt`
 * Notice some logging
