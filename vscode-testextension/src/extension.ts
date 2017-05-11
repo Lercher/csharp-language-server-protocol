@@ -13,29 +13,24 @@ export function activate(context: ExtensionContext) {
 
     // The server is implemented in node
     let serverDll = context.asAbsolutePath('../sample/SampleServer/bin/Debug/netcoreapp1.1/win7-x64/SampleServer.dll');
+    let run = { command: "dotnet.exe", args: [serverDll] };
     window.setStatusBarMessage("starting " + serverDll + " ...");
-    
-    // The debug options for the server
-    let runArgs = [serverDll];
 
     // If the extension is launched in debug mode then the debug server options are used
     // Otherwise the run options are used
-    let serverOptions: ServerOptions = {
-        run : { command: "dotnet.exe", args: runArgs },
-        debug: { command: "dotnet.exe", args: runArgs }
-    };
+    let serverOptions: ServerOptions = { run : run, debug: run };
 
     // Options to control the language client
     let clientOptions: LanguageClientOptions = {
         // Register the server for plain text documents
         documentSelector: [{
             language: 'plaintext',
-            pattern: '**/*'
+            pattern: '**/*.txt'
         }],
         synchronize: {
             // Synchronize the setting section 'CocoR' to the server
             configurationSection: 'CocoR',
-            // Notify the server about file changes to '.clientrc files contain in the workspace
+            // Notify the server about file changes to '.clientrc files contained in the workspace
             fileEvents: workspace.createFileSystemWatcher('**/.clientrc')
         }
     }

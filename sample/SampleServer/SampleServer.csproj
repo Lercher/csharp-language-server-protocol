@@ -7,6 +7,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <Content Include="Readme.md" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="../../src/Lsp/Lsp.csproj" />
     </ItemGroup>
 
