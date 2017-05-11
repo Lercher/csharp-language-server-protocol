@@ -241,6 +241,7 @@ namespace SampleServer
 
         private Hover CreateHover(IEnumerable<string> ss, Range r)
         {
+            // see http://vshaxe.github.io/vscode-extern/vscode/MarkedString.html
             _router.LogMessage("from " + r.Start.Describe() + "-" + r.End.Describe());
             var qy = from s in ss select new MarkedString(s); // "markdown"
             return new Hover() { Contents = new MarkedStringContainer(qy.ToArray()), Range = r };
