@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using JsonRpc;
 using Lsp;
@@ -8,6 +9,7 @@ using Lsp.Capabilities.Client;
 using Lsp.Capabilities.Server;
 using Lsp.Models;
 using Lsp.Protocol;
+using SampleServer.WFModel;
 
 namespace SampleServer
 {    
@@ -39,7 +41,7 @@ namespace SampleServer
         }
     }
 
-    class TextDocumentHandler : ITextDocumentSyncHandler
+    class TextDocumentHandler : ITextDocumentSyncHandler, IHoverHandler
     {
         private readonly ILanguageServer _router;
         private string sourcecode;
@@ -55,7 +57,8 @@ namespace SampleServer
             }
         );
 
-        private SynchronizationCapability _capability;
+        private SynchronizationCapability _SynchronizationCapability;
+        private HoverCapability _HoverCapability;
 
         public TextDocumentHandler(ILanguageServer router)
         {
@@ -138,6 +141,9 @@ namespace SampleServer
                     w.WriteLine("\n{0:n0} error(s) detected", parser.errors.count);
                 }
                 _router.LogMessage(sb.ToString());
+                foreach(var a in parser.tokens.Take(50))
+                    foreach(var s in a.Describe())
+                        _router.LogMessage(s);
             }
         }
 
@@ -169,7 +175,7 @@ namespace SampleServer
 
         public void SetCapability(SynchronizationCapability capability)
         {
-            _capability = capability;
+            _SynchronizationCapability = capability;
         }
 
         public async Task Handle(DidOpenTextDocumentParams notification)
@@ -211,5 +217,40 @@ namespace SampleServer
             _router.LogMessage("GetTextDocumentAttributes " + uri.ToString());
             return new TextDocumentAttributes(uri, "plaintext");
         }
+
+#region "Hover"
+        public Task<Hover> Handle(TextDocumentPositionParams request, CancellationToken token)
+        {
+            if (parser == null || request == null)
+                return Task.FromResult<Hover>(null);
+            _router.LogMessage("Hover over " + request.Position.Describe());
+            var alt = parser.LookingAt(request.Position);
+            return Task.FromResult(CreateHover(alt));
+        }
+
+        private Hover CreateHover(Alternative a)
+        {
+            if (a == null) return CreateHover(string.Empty);
+            return CreateHover(a.Describe(), a.t.ToRange());
+        }
+
+        private Hover CreateHover(string s)
+        {
+            return new Hover() { Contents = new MarkedStringContainer(new MarkedString(s)) };
+        }
+
+        private Hover CreateHover(IEnumerable<string> ss, Range r)
+        {
+            _router.LogMessage("from " + r.Start.Describe() + "-" + r.End.Describe());
+            var qy = from s in ss select new MarkedString(s); // "markdown"
+            return new Hover() { Contents = new MarkedStringContainer(qy.ToArray()), Range = r };
+        }
+
+        public void SetCapability(HoverCapability capability)
+        {
+            _HoverCapability = capability;
+        }
+# endregion
     }
+
 }
