@@ -40,7 +40,10 @@ namespace SampleServer
         }
     }
 
-    class TextDocumentHandler : ITextDocumentSyncHandler, IHoverHandler
+    class TextDocumentHandler
+        : ITextDocumentSyncHandler
+        , IHoverHandler
+        , IDefinitionHandler
     {
         private readonly ILanguageServer _router;
         public TextDocumentHandler(ILanguageServer router)
@@ -78,7 +81,7 @@ namespace SampleServer
 
 
 
-        #region "Open/Close/Change/Save Notifications of ITextDocumentSyncHandler"
+        #region Open/Close/Change/Save Notifications of ITextDocumentSyncHandler
 
         public void SetCapability(SynchronizationCapability capability)
         {
@@ -140,16 +143,14 @@ namespace SampleServer
                 IncludeText = Options.Save.IncludeText
             };
         }
-#endregion
+        #endregion
 
 
-        #region "Hover"
+        #region Hover
         public Task<Hover> Handle(TextDocumentPositionParams request, CancellationToken token)
         {
             var pu = ParseUnitFor(request.TextDocument);
-            _router.LogMessage("Hover over " + request.Position.Describe());
-            var alt = pu.parser.LookingAt(request.Position);
-            return Task.FromResult(pu.CreateHover(alt));
+            return Task.FromResult(pu.CreateHover(request.Position));
         }
 
         public void SetCapability(HoverCapability capability)
@@ -157,17 +158,31 @@ namespace SampleServer
             _HoverCapability = capability;
         }
         private HoverCapability _HoverCapability;
-
         #endregion
 
 
-        #region "Parse Units"
+        #region Parse Units
         private readonly ConcurrentDictionary<Uri, ParseUnit> _ParseUnits = new ConcurrentDictionary<Uri, ParseUnit>();
 
         private ParseUnit ParseUnitFor(TextDocumentIdentifier tdi)
         {
             return _ParseUnits.GetOrAdd(tdi.Uri, u => new ParseUnit(_router, u));
-        }        
+        }
+        #endregion
+
+
+        #region Definition 
+        Task<LocationOrLocations> IRequestHandler<TextDocumentPositionParams, LocationOrLocations>.Handle(TextDocumentPositionParams request, CancellationToken token)
+        {
+            var pu = ParseUnitFor(request.TextDocument);
+            return Task.FromResult(pu.CreateLocation(request.Position));
+        }
+
+        public void SetCapability(DefinitionCapability capability)
+        {
+            _DefinitionCapability = capability;
+        }
+        DefinitionCapability _DefinitionCapability;
         #endregion
     }
 

@@ -25,6 +25,11 @@ namespace SampleServer.WFModel
             ;
         }
 
+        public static Location ToLocation(this Token t, Uri inFile)
+        {
+            return new Location() { Range = t.ToRange(), Uri = inFile };
+        }
+
         public static Range ToRange(this Token t)
         {
             var start = new Position(t.line - 1, t.col - 1);

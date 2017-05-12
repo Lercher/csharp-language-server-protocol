@@ -128,6 +128,12 @@ namespace SampleServer
 
         }
 
+        public Hover CreateHover(Position position)
+        {
+            var alt = parser.LookingAt(position);
+            return CreateHover(alt);
+        }
+
         public Hover CreateHover(Alternative a)
         {
             if (a == null) return CreateHover(string.Empty);
@@ -147,5 +153,13 @@ namespace SampleServer
             return new Hover() { Contents = new MarkedStringContainer(qy.ToArray()), Range = r };
         }
 
+        public LocationOrLocations CreateLocation(Position position)
+        {
+            var alt = parser.LookingAt(position);
+            if (alt?.declaration == null)
+                return new LocationOrLocations();
+            else
+                return new LocationOrLocations(alt.declaration.ToLocation(Uri));
+        }
     }
 }

@@ -35,13 +35,28 @@ See https://github.com/Microsoft/language-server-protocol/blob/master/protocol.m
 
 ### Hover
 
-Point the mouse cursor over a word in the "code". 
+Point the mouse cursor to a word in the "code". 
 Notice a markdown formatted tooltip with some basic 
 information concerning the word under the mouse cursor.
 
 
-## Diagnostics
+### Diagnostics
 
 Notice several diagnostic messages in vscode's lower left status bar. 
 Click on it to display the detailed list.
 Click on a diagnostic line to get to the error's position.
+
+
+### Go to Definition
+
+Find the line 
+````
+List WeitereGeschäftsführer as KundePrivat
+````
+and click on `KundePrivat`.
+Then press `F12` - `Go to definition`. Notice that the Cursor will jump to `KundePrivat`
+in the line 
+````
+Class KundePrivat {Privatkunde bzw. Firmeninhaber/Geschäftsführer}
+````
+
