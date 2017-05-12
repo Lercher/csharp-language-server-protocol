@@ -54,10 +54,18 @@ Find the line
 ````
 List WeitereGeschäftsführer as KundePrivat
 ````
-and click on `KundePrivat`.
-Then press `F12` - `Go to definition`. Notice that the Cursor will jump to `KundePrivat`
-in the line 
+and click on `KundePrivat`. Then press `F12` - `Go to definition`.
+Notice that the Cursor will jump to `KundePrivat` in the line 
 ````
 Class KundePrivat {Privatkunde bzw. Firmeninhaber/Geschäftsführer}
 ````
 
+### Find all References
+
+Find the line (somewhere around line 164)
+````
+Property Aufenthaltsdauer_unbegrenzt Mimics NeinJa
+````
+and click on `NeinJa`. Then press `Shift-F12` - `Find all references`.
+Notice the embedded view with 11 references of the symbol on the right. 
+One of these lines, in our example the last one, contains the definition of the symbol as described in the previous section.

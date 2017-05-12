@@ -153,7 +153,7 @@ namespace SampleServer
             return new Hover() { Contents = new MarkedStringContainer(qy.ToArray()), Range = r };
         }
 
-        public LocationOrLocations CreateLocation(Position position)
+        public LocationOrLocations CreateDefinitionLocation(Position position)
         {
             var alt = parser.LookingAt(position);
             if (alt?.declaration == null)
@@ -161,5 +161,30 @@ namespace SampleServer
             else
                 return new LocationOrLocations(alt.declaration.ToLocation(Uri));
         }
+
+        public LocationContainer CreateReferenceLocations(Position position)
+        {
+            var alt = parser.LookingAt(position);
+            if (alt != null)
+            {
+                if (alt.declaration != null)
+                    return CreateReferenceLocations(alt.declaration);
+                if (!string.IsNullOrEmpty(alt.declares))
+                    return CreateReferenceLocations(alt.t);
+            }
+            return new LocationContainer();
+        }
+
+        private LocationContainer CreateReferenceLocations(Token declaration)
+        {
+            var decl = declaration.ToLocation(Uri);
+            var qy = 
+                from alt in parser.tokens
+                where alt.declaration == declaration
+                select alt.t.ToLocation(Uri);
+            // vscode sorts this by linenumber, so we can use Append here
+            return new LocationContainer(qy.Append(decl)); 
+        }
+
     }
 }

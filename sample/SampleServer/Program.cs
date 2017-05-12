@@ -44,6 +44,7 @@ namespace SampleServer
         : ITextDocumentSyncHandler
         , IHoverHandler
         , IDefinitionHandler
+        , IReferencesHandler
     {
         private readonly ILanguageServer _router;
         public TextDocumentHandler(ILanguageServer router)
@@ -82,13 +83,6 @@ namespace SampleServer
 
 
         #region Open/Close/Change/Save Notifications of ITextDocumentSyncHandler
-
-        public void SetCapability(SynchronizationCapability capability)
-        {
-            _SynchronizationCapability = capability;
-        }
-        private SynchronizationCapability _SynchronizationCapability;
-
 
         // --------------- Change ------------------------------------------
         public async Task Handle(DidChangeTextDocumentParams notification)
@@ -143,6 +137,12 @@ namespace SampleServer
                 IncludeText = Options.Save.IncludeText
             };
         }
+
+        private SynchronizationCapability _SynchronizationCapability;
+        public void SetCapability(SynchronizationCapability capability)
+        {
+            _SynchronizationCapability = capability;
+        }
         #endregion
 
 
@@ -153,11 +153,11 @@ namespace SampleServer
             return Task.FromResult(pu.CreateHover(request.Position));
         }
 
+        private HoverCapability _HoverCapability;
         public void SetCapability(HoverCapability capability)
         {
             _HoverCapability = capability;
         }
-        private HoverCapability _HoverCapability;
         #endregion
 
 
@@ -175,14 +175,28 @@ namespace SampleServer
         Task<LocationOrLocations> IRequestHandler<TextDocumentPositionParams, LocationOrLocations>.Handle(TextDocumentPositionParams request, CancellationToken token)
         {
             var pu = ParseUnitFor(request.TextDocument);
-            return Task.FromResult(pu.CreateLocation(request.Position));
+            return Task.FromResult(pu.CreateDefinitionLocation(request.Position));
         }
 
+        DefinitionCapability _DefinitionCapability;
         public void SetCapability(DefinitionCapability capability)
         {
             _DefinitionCapability = capability;
         }
-        DefinitionCapability _DefinitionCapability;
+        #endregion
+
+        #region References
+        public Task<LocationContainer> Handle(ReferenceParams request, CancellationToken token)
+        {
+            var pu = ParseUnitFor(request.TextDocument);
+            return Task.FromResult(pu.CreateReferenceLocations(request.Position));
+        }
+
+        ReferencesCapability _ReferencesCapability;
+        public void SetCapability(ReferencesCapability capability)
+        {
+            _ReferencesCapability = capability;
+        }
         #endregion
     }
 
