@@ -30,6 +30,8 @@ It is meant to be used with the vscode extension located in `vscode-testextensio
 
 Change to the open vscode instance first and load the sample file `sample\SampleServer\WFModel\SampleWfModel.txt`.
 
+See https://github.com/Microsoft/language-server-protocol/blob/master/protocol.md for the protocol definition.
+
 
 ### Hover
 
