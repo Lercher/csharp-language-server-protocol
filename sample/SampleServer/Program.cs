@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using JsonRpc;
@@ -45,108 +43,105 @@ namespace SampleServer
     class TextDocumentHandler : ITextDocumentSyncHandler, IHoverHandler
     {
         private readonly ILanguageServer _router;
-        private readonly ConcurrentDictionary<Uri, ParseUnit> _ParseUnits;
-
-        private readonly DocumentSelector _documentSelector = new DocumentSelector(
-            new DocumentFilter()
-            {
-                Pattern = "**/*",
-                Language = "plaintext"
-                //Pattern = "**/*.csproj",
-                //Language = "xml"
-            }
-        );
-
-        private SynchronizationCapability _SynchronizationCapability;
-        private HoverCapability _HoverCapability;
-
         public TextDocumentHandler(ILanguageServer router)
         {
             _router = router;
-            _ParseUnits = new ConcurrentDictionary<Uri, ParseUnit>();
         }
 
 
-        public TextDocumentSyncOptions Options { get; } = new TextDocumentSyncOptions()
-        {
+        private readonly DocumentSelector _documentSelector = new DocumentSelector(
+            new DocumentFilter() {
+                Pattern = "**/*.txt",
+                Language = "plaintext"
+            },
+            new DocumentFilter() {
+                Pattern = "**/*.wfmodel",
+                Language = "plaintext"
+            }
+        );
+
+        public TextDocumentSyncOptions Options { get; } = new TextDocumentSyncOptions() {
             WillSaveWaitUntil = false,
             WillSave = true,
-            Change = TextDocumentSyncKind.Full,
-            Save = new SaveOptions()
-            {
-                IncludeText = true // TODO: try false
+            Change = TextDocumentSyncKind.Incremental,
+            Save = new SaveOptions() {
+                IncludeText = false // TODO: try false
             },
             OpenClose = true
         };
-
-        public async Task Handle(DidChangeTextDocumentParams notification)
-        {
-            _router.LogMessage("DidChangeTextDocumentParams");
-            ParseUnitFor(notification.TextDocument).ApplyChanges(notification.ContentChanges);
-            await Task.CompletedTask;
-        }
-
-        private ParseUnit ParseUnitFor(TextDocumentIdentifier tdi)
-        {
-            return _ParseUnits.GetOrAdd(tdi.Uri, u => new ParseUnit(_router, u));
-        }
-
-        TextDocumentChangeRegistrationOptions IRegistration<TextDocumentChangeRegistrationOptions>.GetRegistrationOptions()
-        {
-            return new TextDocumentChangeRegistrationOptions()
-            {
-                DocumentSelector = _documentSelector,
-                SyncKind = Options.Change
-            };
-        }
-
-        public void SetCapability(SynchronizationCapability capability)
-        {
-            _SynchronizationCapability = capability;
-        }
-
-        public async Task Handle(DidOpenTextDocumentParams notification)
-        {
-            _router.LogMessage("DidOpenTextDocumentParams ");
-            ParseUnitFor(notification.TextDocument).ApplyChanges(notification.TextDocument.Text);
-            await Task.CompletedTask;
-        }
-
-        TextDocumentRegistrationOptions IRegistration<TextDocumentRegistrationOptions>.GetRegistrationOptions()
-        {
-            return new TextDocumentRegistrationOptions()
-            {
-                DocumentSelector = _documentSelector,
-            };
-        }
-
-        public Task Handle(DidCloseTextDocumentParams notification)
-        {
-            _router.LogMessage("DidCloseTextDocumentParams");
-            _ParseUnits.TryRemove(notification.TextDocument.Uri, out var  _);
-            return Task.CompletedTask;
-        }
-
-        public Task Handle(DidSaveTextDocumentParams notification)
-        {
-            _router.LogMessage("DidSaveTextDocumentParams");
-            return Task.CompletedTask;
-        }
-
-        TextDocumentSaveRegistrationOptions IRegistration<TextDocumentSaveRegistrationOptions>.GetRegistrationOptions()
-        {
-            return new TextDocumentSaveRegistrationOptions()
-            {
-                DocumentSelector = _documentSelector,
-                IncludeText = Options.Save.IncludeText
-            };
-        }
 
         public TextDocumentAttributes GetTextDocumentAttributes(Uri uri)
         {
             _router.LogMessage("GetTextDocumentAttributes " + uri.ToString());
             return new TextDocumentAttributes(uri, "plaintext");
         }
+
+
+
+        #region "Open/Close/Change/Save Notifications of ITextDocumentSyncHandler"
+
+        public void SetCapability(SynchronizationCapability capability)
+        {
+            _SynchronizationCapability = capability;
+        }
+        private SynchronizationCapability _SynchronizationCapability;
+
+
+        // --------------- Change ------------------------------------------
+        public async Task Handle(DidChangeTextDocumentParams notification)
+        {
+            ParseUnitFor(notification.TextDocument).ApplyChanges(notification.ContentChanges);
+            await Task.CompletedTask;
+        }
+
+        TextDocumentChangeRegistrationOptions IRegistration<TextDocumentChangeRegistrationOptions>.GetRegistrationOptions()
+        {
+            return new TextDocumentChangeRegistrationOptions() {
+                DocumentSelector = _documentSelector,
+                SyncKind = Options.Change
+            };
+        }
+
+        // --------------- Open ------------------------------------------
+
+        public async Task Handle(DidOpenTextDocumentParams notification)
+        {
+            ParseUnitFor(notification.TextDocument).ApplyChanges(notification.TextDocument.Text);
+            await Task.CompletedTask;
+        }
+
+        TextDocumentRegistrationOptions IRegistration<TextDocumentRegistrationOptions>.GetRegistrationOptions()
+        {
+            return new TextDocumentRegistrationOptions() {
+                DocumentSelector = _documentSelector,
+            };
+        }
+
+
+        // --------------- Close ------------------------------------------
+
+        public Task Handle(DidCloseTextDocumentParams notification)
+        {
+            _ParseUnits.TryRemove(notification.TextDocument.Uri, out var _);
+            return Task.CompletedTask;
+        }
+
+        // --------------- Save ------------------------------------------
+
+        public Task Handle(DidSaveTextDocumentParams notification)
+        {
+            return Task.CompletedTask;
+        }
+
+        TextDocumentSaveRegistrationOptions IRegistration<TextDocumentSaveRegistrationOptions>.GetRegistrationOptions()
+        {
+            return new TextDocumentSaveRegistrationOptions() {
+                DocumentSelector = _documentSelector,
+                IncludeText = Options.Save.IncludeText
+            };
+        }
+#endregion
+
 
         #region "Hover"
         public Task<Hover> Handle(TextDocumentPositionParams request, CancellationToken token)
@@ -161,6 +156,18 @@ namespace SampleServer
         {
             _HoverCapability = capability;
         }
+        private HoverCapability _HoverCapability;
+
+        #endregion
+
+
+        #region "Parse Units"
+        private readonly ConcurrentDictionary<Uri, ParseUnit> _ParseUnits = new ConcurrentDictionary<Uri, ParseUnit>();
+
+        private ParseUnit ParseUnitFor(TextDocumentIdentifier tdi)
+        {
+            return _ParseUnits.GetOrAdd(tdi.Uri, u => new ParseUnit(_router, u));
+        }        
         #endregion
     }
 
