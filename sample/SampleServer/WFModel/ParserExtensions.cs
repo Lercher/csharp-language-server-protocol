@@ -32,6 +32,7 @@ namespace SampleServer.WFModel
             return new Range(start, end);
         }
 
+        // https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet
         public static IEnumerable<string> Describe(this Alternative a)
         {
             yield return a.t.Describe();
@@ -50,14 +51,14 @@ namespace SampleServer.WFModel
                     else
                     {
                         var qy = from t in st.items select t.val;
-                        var ast = string.Format("**Valid `{0}`**\n\n* {1}", st.name, string.Join("\n* ", qy.ToArray()));
+                        var ast = string.Format("**Valid `{0}`**\n\n{1}", st.name, string.Join("  \n  ", qy.ToArray()));
                         yield return ast;
                     }
                 }
             }
             if (altKWs.Any())
             {
-                var akw = string.Format("**Valid items**\n\n* {0}", string.Join("\n* ", altKWs.ToArray()));
+                var akw = string.Format("**Valid items**\n\n{0}", string.Join("  \n  ", altKWs.ToArray()));
                 yield return akw;
             }
 
