@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
-using System.Text;
 using Lsp.Models;
 
 namespace SampleServer.WFModel
@@ -37,6 +37,30 @@ namespace SampleServer.WFModel
             yield return a.t.Describe();
             if (!string.IsNullOrEmpty(a.declares)) yield return string.Format("declares a{1} `{0}` symbol", a.declares, isVowel(a.declares) ? "n" : "");
             if (!string.IsNullOrEmpty(a.declared)) yield return string.Format("references a{1} `{0}` symbol", a.declared, isVowel(a.declared) ? "n" : "");
+
+            var altKWs = new List<string>();
+            for(var i = 0; i < a.alt.Length; i++)
+            {
+                if (a.alt[i])
+                {
+                    var kind = Parser.tName[i];
+                    var st = a.st[i];
+                    if (st == null)
+                        altKWs.Add(kind.Replace('"', '`'));
+                    else
+                    {
+                        var qy = from t in st.items select t.val;
+                        var ast = string.Format("**Valid `{0}`**\n\n* {1}", st.name, string.Join("\n* ", qy.ToArray()));
+                        yield return ast;
+                    }
+                }
+            }
+            if (altKWs.Any())
+            {
+                var akw = string.Format("**Valid items**\n\n* {0}", string.Join("\n* ", altKWs.ToArray()));
+                yield return akw;
+            }
+
         }
 
         private static bool isVowel(string s)
