@@ -27,7 +27,7 @@ namespace SampleServer
             //}
 
             Tracer.Connect(Console.Error);
-            Tracer.Deactivate(new int[] { 1, 2 });
+            Tracer.Deactivate(new int[] { 1, -2 });
             var server = new LanguageServer(Console.OpenStandardInput(), Console.OpenStandardOutput());
 
             server.AddHandler(new TextDocumentHandler(server));

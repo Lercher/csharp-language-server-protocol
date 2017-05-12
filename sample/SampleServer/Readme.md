@@ -37,3 +37,9 @@ Point the mouse cursor over a word in the "code".
 Notice a markdown formatted tooltip with some basic 
 information concerning the word under the mouse cursor.
 
+
+## Diagnostics
+
+Notice several diagnostic messages in vscode's lower left status bar. 
+Click on it to display the detailed list.
+Click on a diagnostic line to get to the error's position.

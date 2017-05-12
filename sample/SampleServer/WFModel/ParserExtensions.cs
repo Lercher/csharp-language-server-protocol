@@ -35,9 +35,18 @@ namespace SampleServer.WFModel
         public static IEnumerable<string> Describe(this Alternative a)
         {
             yield return a.t.Describe();
-            if (a.declares != null) yield return string.Format("declares symbol in `{0}`", a.declares);
-            if (a.declared != null) yield return string.Format("is declared as symbol in `{0}`", a.declared);
+            if (!string.IsNullOrEmpty(a.declares)) yield return string.Format("declares a{1} `{0}` symbol", a.declares, isVowel(a.declares) ? "n" : "");
+            if (!string.IsNullOrEmpty(a.declared)) yield return string.Format("references a{1} `{0}` symbol", a.declared, isVowel(a.declared) ? "n" : "");
         }
+
+        private static bool isVowel(string s)
+        {          
+            if (string.IsNullOrWhiteSpace(s))
+                return false;
+            var c = char.ToLowerInvariant(s[0]);
+            return (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u');
+        }
+
 
         public static string Describe(this Position p)
         {

@@ -9,18 +9,17 @@ using SampleServer.WFModel;
 
 namespace SampleServer
 {
-    class ParseUnit
+    class ParseUnit : Lsp.Models.TextDocumentIdentifier
     {
-        public Uri file { get; }
         public WFModel.Parser parser { get; private set; }
+        private int maxLine1 = 0;
         private readonly System.Text.StringBuilder sourcecode = new System.Text.StringBuilder();
         private readonly ILanguageServer _router;
 
 
-        public ParseUnit(ILanguageServer ls, Uri file)
+        public ParseUnit(ILanguageServer ls, Uri file) : base(file)
         {
             _router = ls;
-            this.file = file;
         }
 
         private static IEnumerable<string> LinesOf(System.Text.StringBuilder sb)
@@ -52,9 +51,13 @@ namespace SampleServer
 
         public void ApplyChanges(string fullText)
         {
-            sourcecode.Clear();
-            sourcecode.Append(fullText);
-            Parse();
+            lock (this)
+            {
+                sourcecode.Clear();
+                sourcecode.Append(fullText);
+                maxLine1 = LinesOf(sourcecode).Count();
+                Parse();
+            }
         }
 
         public void ApplyChanges(Container<TextDocumentContentChangeEvent> contentChanges)
@@ -69,26 +72,30 @@ namespace SampleServer
                 return;
             }
 
-            var lines = LinesOf(sourcecode).ToArray();
-            var qy =
-                from item in contentChanges
-                select new
-                {
-                    item.Text,
-                    Start = (int)PosOf(item.Range?.Start, lines),
-                    End = (int)PosOf(item.Range?.End, lines)
-                };
-            var qy2 =
-                from item in qy
-                orderby item.Start descending
-                select item;
-
-            foreach (var c in qy2)
+            lock (this)
             {
-                sourcecode.Remove(c.Start, c.End - c.Start);
-                sourcecode.Insert(c.Start, c.Text);
+                var lines = LinesOf(sourcecode).ToArray();
+                maxLine1 = lines.Length;
+                var qy =
+                    from item in contentChanges
+                    select new
+                    {
+                        item.Text,
+                        Start = (int)PosOf(item.Range?.Start, lines),
+                        End = (int)PosOf(item.Range?.End, lines)
+                    };
+                var qy2 =
+                    from item in qy
+                    orderby item.Start descending
+                    select item;
+
+                foreach (var c in qy2)
+                {
+                    sourcecode.Remove(c.Start, c.End - c.Start);
+                    sourcecode.Insert(c.Start, c.Text);
+                }
+                Parse();
             }
-            Parse();
         }
 
         private void Parse()
@@ -98,20 +105,27 @@ namespace SampleServer
                 var b = System.Text.Encoding.UTF8.GetBytes(sourcecode.ToString());
                 var sb = new System.Text.StringBuilder();
 
-                using (var w = new System.IO.StringWriter(sb))
+                using (var sw = new System.IO.StringWriter(sb))
+                using (var w = new CollectingTextWriter(sw, maxLine1))
                 using (var s = new System.IO.MemoryStream(b))
                 {
                     var scanner = new WFModel.Scanner(s, true); // it's BOM free but UTF8
                     parser = new WFModel.Parser(scanner);
                     parser.errors.errorStream = w;
                     parser.Parse();
-                    w.WriteLine("\n{0:n0} error(s) detected", parser.errors.count);
+                    sw.WriteLine("\n{0:n0} error(s) detected in {1}", parser.errors.count, Uri); // sw (sic!) as we don't want this to be an error
+                    PublishDiagnostics(w.list);
                 }
                 _router.LogMessage(sb.ToString());
-                foreach (var a in parser.tokens.Take(50))
-                    foreach (var s in a.Describe())
-                        _router.LogMessage(s);
             }
+        }
+
+        private void PublishDiagnostics(IEnumerable<Diagnostic> errors)
+        {
+            var Diagnostics = new Container<Diagnostic>(errors);
+            var publishDiagnosticsParams = new PublishDiagnosticsParams() { Diagnostics = Diagnostics, Uri = Uri };
+            _router.PublishDiagnostics(publishDiagnosticsParams);
+
         }
 
         public Hover CreateHover(Alternative a)

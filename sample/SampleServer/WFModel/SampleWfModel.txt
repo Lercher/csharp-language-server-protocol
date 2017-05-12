@@ -586,4 +586,8 @@ Enum Versicherungspakete
 	Basis
 End Enum
 
+'Enum Laender
+'   DEFAULT DE
+'End Enum
+
 End Namespace
