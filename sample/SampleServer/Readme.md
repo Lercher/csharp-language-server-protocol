@@ -43,9 +43,9 @@ information concerning the word under the mouse cursor.
 
 ### Diagnostics
 
-Notice several diagnostic messages in vscode's lower left status bar. 
+Notice a diagnostic messages in vscode's lower left status bar. 
 Click on it to display the detailed list.
-Click on a diagnostic line to get to the error's position.
+Click on a diagnostic line to get to the error's position. Try to correct the error (Hint: Try `Ctrl-Space`).
 
 
 ### Go to Definition
