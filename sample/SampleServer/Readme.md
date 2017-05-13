@@ -83,3 +83,9 @@ SYMBOLTABLES
 
 
 Please consider a word of *warning*: Coco/R is not very good at providing completion, if there are syntactical errors in the DSL and this is *the* common case, when writing a document from scratch.
+
+### (CodeLens)
+
+Not yet implemented.
+
+[Documentation for vscode](https://code.visualstudio.com/docs/extensionAPI/language-support#_codelens-show-actionable-context-information-within-source-code)

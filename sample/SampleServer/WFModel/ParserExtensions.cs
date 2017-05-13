@@ -3,7 +3,9 @@ using System.Linq;
 using System.Collections.Generic;
 using Lsp.Models;
 
-namespace SampleServer.WFModel
+using SampleServer.WFModel; // use this Parser/Scanner/etc.
+
+namespace SampleServer
 {
     public static class ParserExtensions
     {

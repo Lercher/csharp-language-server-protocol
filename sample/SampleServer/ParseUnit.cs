@@ -1,17 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Lsp;
 using Lsp.Models;
 using Lsp.Protocol;
-using SampleServer.WFModel;
+
+using SampleServer.WFModel; // use this Parser/Scanner/etc.
 
 namespace SampleServer
 {
-    class ParseUnit : Lsp.Models.TextDocumentIdentifier
+    public class ParseUnit : Lsp.Models.TextDocumentIdentifier
     {
-        public WFModel.Parser parser { get; private set; }
+        public Parser parser { get; private set; }
         private readonly System.Text.StringBuilder sourcecode = new System.Text.StringBuilder();
         private readonly ILanguageServer _router;
 
@@ -119,8 +119,8 @@ namespace SampleServer
                 using (var w = new CollectingTextWriter(sw, maxLine1))
                 using (var s = new System.IO.MemoryStream(b))
                 {
-                    var scanner = new WFModel.Scanner(s, true); // it's BOM free but UTF8
-                    parser = new WFModel.Parser(scanner);
+                    var scanner = new Scanner(s, true); // it's BOM free but UTF8
+                    parser = new Parser(scanner);
                     parser.errors.errorStream = w;
                     parser.Parse();
                     sw.WriteLine("\n{0:n0} error(s) detected in {1}", parser.errors.count, Uri); // sw (sic!) as we don't want this to be an error

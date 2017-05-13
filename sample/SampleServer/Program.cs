@@ -8,7 +8,6 @@ using Lsp.Capabilities.Client;
 using Lsp.Capabilities.Server;
 using Lsp.Models;
 using Lsp.Protocol;
-using SampleServer.WFModel;
 
 namespace SampleServer
 {

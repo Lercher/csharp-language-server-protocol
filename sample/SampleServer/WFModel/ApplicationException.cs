@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SampleServer.WFModel
+namespace SampleServer
 {
 
     public class ApplicationException : Exception
