@@ -88,4 +88,15 @@ Please consider a word of *warning*: Coco/R is not very good at providing comple
 
 Not yet implemented.
 
-[Documentation for vscode](https://code.visualstudio.com/docs/extensionAPI/language-support#_codelens-show-actionable-context-information-within-source-code)
+[API for vscode](https://code.visualstudio.com/docs/extensionAPI/language-support#_codelens-show-actionable-context-information-within-source-code)
+
+[CodeLens Class](http://vshaxe.github.io/vscode-extern/vscode/CodeLens.html)
+
+[vscode Complex commands](https://code.visualstudio.com/docs/extensionAPI/vscode-api-commands)  
+  `vscode.previewHtml` - Render the HTML of the resource in an editor view.
+
+`uri` Uri of the resource to preview.  
+  `column` (optional) Column in which to preview.  
+  `label` (optional) An human readable string that is used as title for the preview.
+
+[previewHTML Sample](https://github.com/Microsoft/vscode-extension-samples/tree/master/previewhtml-sample)
