@@ -12,7 +12,6 @@ namespace SampleServer
     class ParseUnit : Lsp.Models.TextDocumentIdentifier
     {
         public WFModel.Parser parser { get; private set; }
-        private int maxLine1 = 0;
         private readonly System.Text.StringBuilder sourcecode = new System.Text.StringBuilder();
         private readonly ILanguageServer _router;
 
@@ -55,7 +54,6 @@ namespace SampleServer
             {
                 sourcecode.Clear();
                 sourcecode.Append(fullText);
-                maxLine1 = LinesOf(sourcecode).Count();
                 Parse();
             }
         }
@@ -75,7 +73,6 @@ namespace SampleServer
             lock (this)
             {
                 var lines = LinesOf(sourcecode).ToArray();
-                maxLine1 = lines.Length;
                 var qy =
                     from item in contentChanges
                     select new
@@ -102,6 +99,8 @@ namespace SampleServer
         {
             lock (this)
             {
+                var maxLine1 = LinesOf(sourcecode).Count();
+
                 var b = System.Text.Encoding.UTF8.GetBytes(sourcecode.ToString());
                 var sb = new System.Text.StringBuilder();
 
