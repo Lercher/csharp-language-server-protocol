@@ -45,6 +45,7 @@ namespace SampleServer
         , IHoverHandler
         , IDefinitionHandler
         , IReferencesHandler
+        , ICompletionHandler
     {
         private readonly ILanguageServer _router;
         public TextDocumentHandler(ILanguageServer router)
@@ -196,6 +197,29 @@ namespace SampleServer
         public void SetCapability(ReferencesCapability capability)
         {
             _ReferencesCapability = capability;
+        }
+        #endregion
+
+        #region Completion
+        Task<CompletionList> IRequestHandler<TextDocumentPositionParams, CompletionList>.Handle(TextDocumentPositionParams request, CancellationToken token)
+        {
+            var pu = ParseUnitFor(request.TextDocument);
+            return Task.FromResult(pu.CreateCompletionList(request.Position));
+        }
+
+        public CompletionRegistrationOptions GetRegistrationOptions()
+        {
+            return new CompletionRegistrationOptions() {
+                DocumentSelector = _documentSelector,
+                TriggerCharacters = new Container<string>(new string[] {}),
+                ResolveProvider = false
+            };
+        }
+
+        CompletionCapability _CompletionCapability;
+        public void SetCapability(CompletionCapability capability)
+        {
+            _CompletionCapability = capability;
         }
         #endregion
     }

@@ -185,5 +185,81 @@ namespace SampleServer
             return new LocationContainer(qy.Append(decl)); 
         }
 
+        private RecentCompletionRequest _RecentCompletionRequest = null;
+        public CompletionList CreateCompletionList(Position position)
+        {
+            var alt = parser.LookingAt(position);
+            lock (this)
+            {
+                if (RecentCompletionRequest.WasSuchARequestRecently(ref _RecentCompletionRequest, alt.t))
+                    return new CompletionList(Enumerable.Empty<CompletionItem>());
+            }
+            return new CompletionList(CreateCompletionList(alt));
+        }
+
+        private IEnumerable<CompletionItem> CreateCompletionList(Alternative a)
+        {
+            if (a == null) yield break;
+
+            for (var i = 0; i < a.alt.Length; i++)
+            {
+                if (a.alt[i])
+                {
+                    var kind = Parser.tName[i];
+                    var st = a.st[i];
+                    if (st == null)
+                    {
+                        if (kind.StartsWith("\""))
+                        { 
+                            var kw = kind.Substring(1, kind.Length - 2);
+                            yield return CreateCompletionItem("{0} - {1}", kw, CompletionItemKind.Keyword, null);
+                        }
+                        else
+                        {
+                            yield return CreateCompletionItem("({0}) structure", kind, CompletionItemKind.Text, null);
+                        }
+                    }
+                    else
+                    {
+                        foreach(var t in st.items)
+                            yield return CreateCompletionItem("{0} - {2} symbol", t.val, CompletionItemKind.Reference, st.name);
+                    }
+                }
+            }
+        }
+
+        private static CompletionItem CreateCompletionItem(string labelformat, string text, CompletionItemKind kind, object arg2)
+        {
+            var label = string.Format(labelformat, text, kind, arg2);
+            return new CompletionItem() {
+                InsertText = text,
+                Label = label,
+                Kind = kind
+            };
+        }
+
+        private class RecentCompletionRequest
+        {
+            public readonly Token t;
+            public readonly DateTime when = DateTime.Now;
+
+            private RecentCompletionRequest(Token t) => this.t = t;
+
+            public static bool WasSuchARequestRecently(ref RecentCompletionRequest recent, Token t)
+            {
+                try
+                {
+                    if (recent == null) return false;
+                    if (t.charPos != recent.t.charPos) return false;
+                    var diff = DateTime.Now.Subtract(recent.when);
+                    if (diff.TotalMilliseconds > 200.0) return false;
+                    return true;
+                }
+                finally
+                {
+                    recent = new RecentCompletionRequest(t);
+                }
+            }
+        }
     }
 }

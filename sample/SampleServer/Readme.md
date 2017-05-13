@@ -69,3 +69,17 @@ Property Aufenthaltsdauer_unbegrenzt Mimics NeinJa
 and click on `NeinJa`. Then press `Shift-F12` - `Find all references`.
 Notice the embedded view with 11 references of the symbol on the right. 
 One of these lines, in our example the last one, contains the definition of the symbol as described in the previous section.
+
+
+### Code Completion, aka Intellisense
+
+Place the cursor inside some word after an `as` or `Mimics` keyword, inside a keyword such as `Property` in the example file. Press `Ctrl-Space` and notice a short list of variants for this word. Now move the cursor to the start of such a word and press `Ctrl-Space` again. Notice that a much longer list of completion items appears and that each line is marked with "`- Keyword`" for terminal symbols, "`- structure`" for non-terminal symbols and "`- ` *x* ` symbol`", where *x* is the name of a symbol table defined in the *.atg file. In the example grammar `sample\SampleServer\WFModel\WFModel.atg` there are these
+
+````
+SYMBOLTABLES
+	types.
+	enumtypes.
+````
+
+
+Please consider a word of *warning*: Coco/R is not very good at providing completion, if there are syntactical errors in the DSL and this is *the* common case, when writing a document from scratch.
