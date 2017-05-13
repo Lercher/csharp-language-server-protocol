@@ -88,6 +88,17 @@ namespace SampleServer
 
                 foreach (var c in qy2)
                 {
+#if false
+                    try
+                    {
+                        var v = sourcecode.ToString();
+                        var before = v.Substring(c.Start - 10, 10).Replace("\r\n", "\\n");
+                        var removed = v.Substring(c.Start, c.End - c.Start).Replace("\r\n", "\\n");
+                        var after = v.Substring(c.End, 10).Replace("\r\n", "\\n");
+                        _router.LogMessage(MessageType.Log, string.Format("...{0}[{1}>{3}]{2}...", before, removed, after, c.Text));
+                    }
+                    catch (Exception) { }
+#endif
                     sourcecode.Remove(c.Start, c.End - c.Start);
                     sourcecode.Insert(c.Start, c.Text);
                 }
@@ -115,7 +126,7 @@ namespace SampleServer
                     sw.WriteLine("\n{0:n0} error(s) detected in {1}", parser.errors.count, Uri); // sw (sic!) as we don't want this to be an error
                     PublishDiagnostics(w.list);
                 }
-                _router.LogMessage(sb.ToString());
+                JsonRpc.Tracer.Do(3, (tw) => tw.WriteLine(sb.ToString()));
             }
         }
 
@@ -191,7 +202,7 @@ namespace SampleServer
             var alt = parser.LookingAt(position);
             lock (this)
             {
-                if (RecentCompletionRequest.WasSuchARequestRecently(ref _RecentCompletionRequest, alt.t))
+                if (RecentCompletionRequest.WasSuchARequestRecently(ref _RecentCompletionRequest, alt?.t))
                     return new CompletionList(Enumerable.Empty<CompletionItem>());
             }
             return new CompletionList(CreateCompletionList(alt));
@@ -247,6 +258,7 @@ namespace SampleServer
 
             public static bool WasSuchARequestRecently(ref RecentCompletionRequest recent, Token t)
             {
+                if (t == null) return false;
                 try
                 {
                     if (recent == null) return false;
