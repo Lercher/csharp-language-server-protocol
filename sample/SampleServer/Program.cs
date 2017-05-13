@@ -45,6 +45,7 @@ namespace SampleServer
         , IDefinitionHandler
         , IReferencesHandler
         , ICompletionHandler
+        , IRenameHandler
     {
         private readonly ILanguageServer _router;
         public TextDocumentHandler(ILanguageServer router)
@@ -210,7 +211,7 @@ namespace SampleServer
         {
             return new CompletionRegistrationOptions() {
                 DocumentSelector = _documentSelector,
-                TriggerCharacters = new Container<string>(new string[] {}),
+                TriggerCharacters = new Container<string>(new string[] { }),
                 ResolveProvider = false
             };
         }
@@ -219,6 +220,20 @@ namespace SampleServer
         public void SetCapability(CompletionCapability capability)
         {
             _CompletionCapability = capability;
+        }
+        #endregion
+
+        #region Rename Symbol
+        public Task<WorkspaceEdit> Handle(RenameParams request, CancellationToken token)
+        {
+            var pu = ParseUnitFor(request.TextDocument);
+            return Task.FromResult(pu.CreateWorkspaceEdit(request.Position, request.NewName));
+        }
+
+        RenameCapability _RenameCapability;
+        public void SetCapability(RenameCapability capability)
+        {
+            _RenameCapability = capability;
         }
         #endregion
     }

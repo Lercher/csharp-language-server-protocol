@@ -163,7 +163,7 @@ Class Selbstauskunft
     Property In_Deutschland_lebend_seit as Date { #12/01/2000# }
     Property Aufenthaltsdauer_unbegrenzt Mimics NeinJa
     Property Aufenthaltsdauer_bis as Date
-    Property Arbeitserlaubnis_unbegrenzt Mimics NeinJa
+    Property NeinJa Mimics NeinJa
     Property Arbeitserlaubnis_bis as Date
     Property Schufaeinwilligung_erteilt Mimics NeinJa
     Property Nettoeinkommen_mtl as Double {123456.00}

@@ -239,6 +239,7 @@ namespace SampleServer
             }
         }
 
+
         private static CompletionItem CreateCompletionItem(string labelformat, string text, CompletionItemKind kind, object arg2)
         {
             var label = string.Format(labelformat, text, kind, arg2);
@@ -247,6 +248,28 @@ namespace SampleServer
                 Label = label,
                 Kind = kind
             };
+        }
+
+        public WorkspaceEdit CreateWorkspaceEdit(Position position, string newName)
+        {
+            var alt = parser.LookingAt(position);
+            var dict = new Dictionary<Uri, IEnumerable<TextEdit>>();
+            dict[Uri] = RenameSymbol(alt, newName);
+            return new WorkspaceEdit() { Changes = dict };
+        }
+
+        private IEnumerable<TextEdit> RenameSymbol(Alternative alt, string newName)
+        {
+            if (alt == null) yield break;
+            var decl = alt.declaration ?? alt.t;
+            yield return new TextEdit() { NewText = newName, Range = decl.ToRange() };
+            var qy = 
+                from a in parser.tokens
+                where a.declaration == decl
+                select a.t.ToRange() into r
+                select new TextEdit() { NewText = newName, Range = r };
+            foreach (var te in qy)
+                yield return te;
         }
 
         private class RecentCompletionRequest
