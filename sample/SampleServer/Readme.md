@@ -113,11 +113,18 @@ but if you close and re-open it, all is OK again.
 
 ### (CodeLens)
 
-Not yet implemented. Commands will probably only output as info lines to the Output window.
+Not yet implemented. Commands will probably only output as info lines to the Output window. 
+Alternatively open a new untitled document in a 2nd column.
 
 [API for vscode](https://code.visualstudio.com/docs/extensionAPI/language-support#_codelens-show-actionable-context-information-within-source-code)
 
 [CodeLens Class](http://vshaxe.github.io/vscode-extern/vscode/CodeLens.html)
+
+[vscode Commands](https://code.visualstudio.com/docs/extensionAPI/vscode-api)  
+  command  
+  window  
+  workspace - openTextDocument + window.showTextDocument [as show here](https://github.com/Microsoft/vscode/issues/11247)
+
 
 [vscode Complex commands](https://code.visualstudio.com/docs/extensionAPI/vscode-api-commands)  
   `vscode.previewHtml` - Render the HTML of the resource in an editor view.
