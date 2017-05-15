@@ -136,3 +136,5 @@ Alternatively open a new untitled document in a 2nd column.
 [vscode.previewHTML Sample](https://github.com/Microsoft/vscode-extension-samples/tree/master/previewhtml-sample)
 
 [A TextDocumentContentProvider](https://github.com/Microsoft/vscode-extension-samples/tree/master/contentprovider-sample)
+
+In the [Regex preview extension](https://github.com/chrmarti/vscode-regex/blob/master/src/extension.ts) there is code to open and decorate a preview window. This is probably, what I want to present my ideas for a code lens, namely to generate some code snippets to be used elsewhere.
