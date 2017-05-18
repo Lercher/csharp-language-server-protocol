@@ -40,12 +40,12 @@ RootClass Data
 	Property RatingResponse as XML
 	Property RatingNachmeldung as XML
 	Property RatingArchiv as XML
-	Property EuroradCommand
-	Property EuroradCommandRequest as XML
-	Property EuroradCommandResponse as XML
-	Property EuroradCommandResponseId
-	List EuroradSeriennummernMessages as Singhammer.Pos.Interfaces.Identifier
-	Property EuroradStatusResponse as XML
+	Property EuroCommand
+	Property EuroCommandRequest as XML
+	Property EuroCommandResponse as XML
+	Property EuroCommandResponseId
+	List EuroSeriennummernMessages as Singhammer.Pos.Interfaces.Identifier
+	Property EuroStatusResponse as XML
 	List CasObjekte As CasObjekt
 End Class
 
@@ -65,9 +65,9 @@ Class Vertrag
 	Property IhrZeichen
 	Property Sonderkondition
 	Property Stornogrund
-	InfoProperty EuroradSpontankunde
-	APProperty EuroradVersicherungpaket Mimics Versicherungspakete = ""
-	Property EuroradVersicherungpaketOK
+	InfoProperty EuroSpontankunde
+	APProperty EuroVersicherungpaket Mimics Versicherungspakete = ""
+	Property EuroVersicherungpaketOK
 End Class
 
 Class KundeGewerblich {Gewerblicher Kunde}
@@ -263,9 +263,9 @@ Class Parameter
 	InfoProperty PruefungBeiIndex as Integer {276}
 	InfoProperty PartnerEmail
 	InfoProperty istMF 
-	InfoProperty EuroradCallbackUrl
-	InfoProperty EuroradReferenz
-	InfoProperty EuroradStichtag as Date
+	InfoProperty EuroCallbackUrl
+	InfoProperty EuroReferenz
+	InfoProperty EuroStichtag as Date
 	List KooperationsListe as String
     List KooperationsListeInnendienst As String
 End Class
