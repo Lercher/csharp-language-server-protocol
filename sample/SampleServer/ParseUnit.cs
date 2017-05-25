@@ -5,13 +5,11 @@ using Lsp;
 using Lsp.Models;
 using Lsp.Protocol;
 
-using SampleServer.WFModel; // use this Parser/Scanner/etc.
-
 namespace SampleServer
 {
     public class ParseUnit : Lsp.Models.TextDocumentIdentifier
     {
-        public Parser parser { get; private set; }
+        public CocoRCore.ParserBase parser { get; private set; }
         private readonly System.Text.StringBuilder sourcecode = new System.Text.StringBuilder();
         private readonly ILanguageServer _router;
 
@@ -115,24 +113,26 @@ namespace SampleServer
                 var b = System.Text.Encoding.UTF8.GetBytes(sourcecode.ToString());
                 var sb = new System.Text.StringBuilder();
 
-                using (var sw = new System.IO.StringWriter(sb))
-                using (var w = new CollectingTextWriter(sw, maxLine1))
+                using (var w = new System.IO.StringWriter(sb))
                 using (var s = new System.IO.MemoryStream(b))
                 {
-                    var scanner = new Scanner(s, true); // it's BOM free but UTF8
-                    parser = new Parser(scanner);
+                    var scanner = CocoRCore.Samples.WFModel.Scanner.Create(s, true); // it's BOM free but UTF8
+                    parser = new CocoRCore.Samples.WFModel.Parser(scanner);
                     parser.errors.errorStream = w;
                     parser.Parse();
-                    sw.WriteLine("\n{0:n0} error(s) detected in {1}", parser.errors.count, Uri); // sw (sic!) as we don't want this to be an error
-                    PublishDiagnostics(w.list);
+                    w.WriteLine("\n{0:n0} error(s) detected in {1}", parser.errors.CountError, Uri);
+                    PublishDiagnostics(parser.errors);
                 }
                 JsonRpc.Tracer.Do(3, (tw) => tw.WriteLine(sb.ToString()));
             }
         }
 
-        private void PublishDiagnostics(IEnumerable<Diagnostic> errors)
+        private void PublishDiagnostics(IEnumerable<CocoRCore.Diagnostic> errors)
         {
-            var Diagnostics = new Container<Diagnostic>(errors);
+            var qy = 
+                from e in errors
+                select new Diagnostic() { Source = "Coco/R", Message = e.message, Range = e.ToRange(), Severity = DiagnosticSeverity.Error };
+            var Diagnostics = new Container<Diagnostic>(qy);
             var publishDiagnosticsParams = new PublishDiagnosticsParams() { Diagnostics = Diagnostics, Uri = Uri };
             _router.PublishDiagnostics(publishDiagnosticsParams);
 
@@ -144,10 +144,10 @@ namespace SampleServer
             return CreateHover(alt);
         }
 
-        public Hover CreateHover(Alternative a)
+        public Hover CreateHover(CocoRCore.Alternative a)
         {
             if (a == null) return CreateHover(string.Empty);
-            return CreateHover(a.Describe(), a.t.ToRange());
+            return CreateHover(a.DescribeFor(parser), a.t.ToRange());
         }
 
         public Hover CreateHover(string s)
@@ -185,7 +185,7 @@ namespace SampleServer
             return new LocationContainer();
         }
 
-        private LocationContainer CreateReferenceLocations(Token declaration)
+        private LocationContainer CreateReferenceLocations(CocoRCore.Token declaration)
         {
             var decl = declaration.ToLocation(Uri);
             var qy = 
@@ -208,7 +208,7 @@ namespace SampleServer
             return new CompletionList(CreateCompletionList(alt));
         }
 
-        private IEnumerable<CompletionItem> CreateCompletionList(Alternative a)
+        private IEnumerable<CompletionItem> CreateCompletionList(CocoRCore.Alternative a)
         {
             if (a == null) yield break;
 
@@ -216,7 +216,7 @@ namespace SampleServer
             {
                 if (a.alt[i])
                 {
-                    var kind = Parser.tName[i];
+                    var kind = parser.NameOf(i);
                     var st = a.st[i];
                     if (st == null)
                     {
@@ -258,7 +258,7 @@ namespace SampleServer
             return new WorkspaceEdit() { Changes = dict };
         }
 
-        private IEnumerable<TextEdit> RenameSymbol(Alternative alt, string newName)
+        private IEnumerable<TextEdit> RenameSymbol(CocoRCore.Alternative alt, string newName)
         {
             if (alt == null) yield break;
             var decl = alt.declaration ?? alt.t;
@@ -274,18 +274,18 @@ namespace SampleServer
 
         private class RecentCompletionRequest
         {
-            public readonly Token t;
+            public readonly CocoRCore.Token t;
             public readonly DateTime when = DateTime.Now;
 
-            private RecentCompletionRequest(Token t) => this.t = t;
+            private RecentCompletionRequest(CocoRCore.Token t) => this.t = t;
 
-            public static bool WasSuchARequestRecently(ref RecentCompletionRequest recent, Token t)
+            public static bool WasSuchARequestRecently(ref RecentCompletionRequest recent, CocoRCore.Token t)
             {
                 if (t == null) return false;
                 try
                 {
                     if (recent == null) return false;
-                    if (t.charPos != recent.t.charPos) return false;
+                    if (t.pos != recent.t.pos) return false;
                     var diff = DateTime.Now.Subtract(recent.when);
                     if (diff.TotalMilliseconds > 200.0) return false;
                     return true;

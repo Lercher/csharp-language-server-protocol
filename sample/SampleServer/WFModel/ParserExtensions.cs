@@ -3,46 +3,48 @@ using System.Linq;
 using System.Collections.Generic;
 using Lsp.Models;
 
-using SampleServer.WFModel; // use this Parser/Scanner/etc.
-
 namespace SampleServer
 {
     public static class ParserExtensions
     {
-        public static Alternative LookingAt(this Parser parser, Position p)
+        public static Range ToRange(this CocoRCore.Diagnostic e)
         {
-            foreach (var t in parser.tokens)
-            {
-                if (t.t.IsAt(p))
-                    return t;
-            }
-            return null;
+            var pos = new Position(e.line1 - 1, e.col1 - 1);
+            var range = new Range(pos, pos);
+            return range;
         }
 
-        public static bool IsAt(this Token t, Position p)
+        public static CocoRCore.Alternative LookingAt(this CocoRCore.ParserBase parser, Position p)
         {
-            return t.line == p.Line + 1
-                && t.col <= p.Character + 1 
-                && p.Character + 1 <= t.col + t.val.Length
+            var qy = from a in parser.tokens where a.t.IsAt(p) select a;
+            return qy.FirstOrDefault();
+        }
+
+        public static bool IsAt(this CocoRCore.Token t, Position p)
+        {
+            return t.position.line <= p.Line + 1 && p.Line + 1 <= t.endPosition.line
+                && t.position.col <= p.Character + 1 && p.Character + 1 <= t.endPosition.col
             ;
         }
 
-        public static Location ToLocation(this Token t, Uri inFile)
+        public static Location ToLocation(this CocoRCore.Token t, Uri inFile)
         {
             return new Location() { Range = t.ToRange(), Uri = inFile };
         }
 
-        public static Range ToRange(this Token t)
+        public static Position ToPosition(this CocoRCore.Position p, int colOffset) => new Position(p.line - 1, p.col - 1 + colOffset);
+
+        public static Range ToRange(this CocoRCore.Token t)
         {
-            var start = new Position(t.line - 1, t.col - 1);
-            var end = new Position(t.line - 1, t.col - 1 + t.val.Length);
+            var start = t.position.ToPosition(colOffset: 0);
+            var end = t.endPosition.ToPosition(colOffset: 1);
             return new Range(start, end);
         }
 
         // https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet
-        public static IEnumerable<string> Describe(this Alternative a)
+        public static IEnumerable<string> DescribeFor(this CocoRCore.Alternative a, CocoRCore.ParserBase parser)
         {
-            yield return a.t.Describe();
+            yield return a.t.DescribeFor(parser);
             if (!string.IsNullOrEmpty(a.declares)) yield return string.Format("declares a{1} `{0}` symbol", a.declares, isVowel(a.declares) ? "n" : "");
             if (!string.IsNullOrEmpty(a.declared)) yield return string.Format("references a{1} `{0}` symbol", a.declared, isVowel(a.declared) ? "n" : "");
 
@@ -51,7 +53,7 @@ namespace SampleServer
             {
                 if (a.alt[i])
                 {
-                    var kind = Parser.tName[i];
+                    var kind = parser.NameOf(i);
                     var st = a.st[i];
                     if (st == null)
                         altKWs.Add(kind.Replace('"', '`'));
@@ -85,9 +87,9 @@ namespace SampleServer
             return string.Format("({0},{1})", p.Line, p.Character);
         }
 
-        public static string Describe(this Token t)
+        public static string DescribeFor(this CocoRCore.Token t, CocoRCore.ParserBase parser)
         {
-            var kind = Parser.tName[t.kind];
+            var kind = parser.NameOf(t.kind);
             if (kind.StartsWith("\""))
                 return "Keyword **" + t.val + "**";
             return string.Format("[{2}] **{3}**", t.line, t.col, kind, t.val);

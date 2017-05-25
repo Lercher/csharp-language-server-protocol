@@ -1,11 +1,17 @@
 ﻿// See C:\Daten\GitHub\CocoR\CSharp\WFModel
 // branch: git checkout singhammer-wfmodel
 
+$namespace=CocoRCore.Samples.WFModel
+
 COMPILER WFModel
 
-	public override void Prime(Token t) { 
-		if (t.kind == _string || t.kind == _braced || t.kind == _bracketed) 
-		t.val = t.val.Substring(1, t.val.Length - 2);
+	public override void Prime(ref Token t) { 
+		if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
+		{
+			var tb = t.Copy(); 
+			tb.setValue(t.valScanned.Substring(1, t.val.Length - 2), scanner.casingString);
+			t = tb.Freeze();
+		}
 	}
 
 IGNORECASE
