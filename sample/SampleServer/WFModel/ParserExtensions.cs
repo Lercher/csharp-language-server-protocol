@@ -10,36 +10,23 @@ namespace SampleServer
         public static Range ToRange(this CocoRCore.Diagnostic e)
         {
             var pos = new Position(e.line1 - 1, e.col1 - 1);
-            var range = new Range(pos, pos);
-            return range;
+            return new Range(pos, pos);
         }
 
-        public static CocoRCore.Alternative LookingAt(this CocoRCore.ParserBase parser, Position p)
-        {
-            var qy = from a in parser.tokens where a.t.IsAt(p) select a;
-            return qy.FirstOrDefault();
-        }
 
         public static bool IsAt(this CocoRCore.Token t, Position p)
         {
-            return t.position.line <= p.Line + 1 && p.Line + 1 <= t.endPosition.line
-                && t.position.col <= p.Character + 1 && p.Character + 1 <= t.endPosition.col
-            ;
+            var pl1 = (int) p.Line + 1;
+            var pc1 = (int) p.Character + 1;
+            return t.position.IsBefore(pl1, pc1) && t.endPosition.IsAfter(pl1, pc1);
         }
 
-        public static Location ToLocation(this CocoRCore.Token t, Uri inFile)
-        {
-            return new Location() { Range = t.ToRange(), Uri = inFile };
-        }
-
-        public static Position ToPosition(this CocoRCore.Position p, int colOffset) => new Position(p.line - 1, p.col - 1 + colOffset);
-
-        public static Range ToRange(this CocoRCore.Token t)
-        {
-            var start = t.position.ToPosition(colOffset: 0);
-            var end = t.endPosition.ToPosition(colOffset: 1);
-            return new Range(start, end);
-        }
+        public static CocoRCore.Alternative LookingAt(this CocoRCore.ParserBase parser, Position p) => parser.tokens.Where(a => a.t.IsAt(p)).FirstOrDefault();
+        public static bool IsBefore(this CocoRCore.Position pt, int line1, int col1) => pt.line < line1 || pt.line == line1 && pt.col <= col1;
+        public static bool IsAfter (this CocoRCore.Position pt, int line1, int col1) => pt.line > line1 || pt.line == line1 && pt.col > col1;
+        public static Location ToLocation(this CocoRCore.Token t, Uri inFile) => new Location() { Range = t.ToRange(), Uri = inFile };
+        public static Position ToPosition(this CocoRCore.Position p) => new Position(p.line - 1, p.col - 1);
+        public static Range ToRange(this CocoRCore.Token t) => new Range(t.position.ToPosition(), t.endPosition.ToPosition());
 
         // https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet
         public static IEnumerable<string> DescribeFor(this CocoRCore.Alternative a, CocoRCore.ParserBase parser)
@@ -53,13 +40,18 @@ namespace SampleServer
             {
                 if (a.alt[i])
                 {
-                    var kind = parser.NameOf(i);
+                    var kind = parser.NameOfTokenKind(i);
                     var st = a.st[i];
                     if (st == null)
-                        altKWs.Add(kind.Replace('"', '`'));
+                    {
+                        if (kind.StartsWith("["))
+                            altKWs.Add(kind);
+                        else
+                            altKWs.Add($"`{kind}`");
+                    }
                     else
                     {
-                        var qy = from t in st.items select t.val;
+                        var qy = from t in st.items select t.valScanned;
                         var ast = string.Format("**Valid `{0}`**\n\n{1}", st.name, string.Join("  \n  ", qy.ToArray()));
                         yield return ast;
                     }
@@ -89,10 +81,10 @@ namespace SampleServer
 
         public static string DescribeFor(this CocoRCore.Token t, CocoRCore.ParserBase parser)
         {
-            var kind = parser.NameOf(t.kind);
-            if (kind.StartsWith("\""))
-                return "Keyword **" + t.val + "**";
-            return string.Format("[{2}] **{3}**", t.line, t.col, kind, t.val);
+            var kind = parser.NameOfTokenKind(t.kind);
+            if (!kind.StartsWith("["))
+                return $"Keyword **{t.valScanned}**";
+            return string.Format("{2} **{3}**", t.line, t.col, kind, t.valScanned);
         }
     }
 }
