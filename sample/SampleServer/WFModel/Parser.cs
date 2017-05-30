@@ -13,7 +13,6 @@ namespace CocoRCore.Samples.WFModel {
 
 	public class Parser : ParserBase 
 	{
-	public const int _EOF = 0; // TOKEN EOF
 	public const int _ident = 1; // TOKEN ident
 	public const int _dottedident = 2; // TOKEN dottedident
 	public const int _number = 3; // TOKEN number
@@ -48,17 +47,17 @@ namespace CocoRCore.Samples.WFModel {
 	}
 
 public override void Prime(ref Token t) { 
-if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
-{
-	var tb = t.Copy(); 
-	tb.setValue(t.valScanned.Substring(1, t.val.Length - 2), scanner.casingString);
-	t = tb.Freeze();
-}
-}
+		if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
+		{
+			var tb = t.Copy(); 
+			tb.setValue(t.valScanned.Substring(1, t.val.Length - 2), scanner.casingString);
+			t = tb.Freeze();
+		}
+	}
 
 
 
-		public Parser(Scanner scanner) : base(scanner, new Errors())
+		public Parser(ScannerBase scanner) : base(scanner)
 		{
 		types = new Symboltable("types", true, false, this);
 		enumtypes = new Symboltable("enumtypes", true, false, this);
@@ -80,7 +79,11 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 				_newAlt();
 
 				la = scanner.Scan();
-				if (la.kind <= maxT) { ++errDist; break; }
+				if (la.kind <= maxT) 
+				{ 
+					++errDist; 
+					break; 
+				}
 
 				la = t;
 			}
@@ -106,8 +109,13 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
         private bool WeakSeparator(int n, int syFol, int repFol)
         {
             var kind = la.kind;
-            if (isKind(la, n)) { Get(); return true; }
-            else if (StartOf(repFol)) { return false; }
+            if (isKind(la, n)) 
+			{ 
+				Get(); 
+				return true; 
+			}
+            else if (StartOf(repFol)) 
+				return false;
             else
             {
                 SynErr(n);
@@ -122,17 +130,22 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 
         protected void Expect(int n)
         {
-            if (isKind(la, n)) Get(); else { SynErr(n); }
+            if (isKind(la, n)) 
+				Get(); 
+			else 
+				SynErr(n);
         }
 
 
         protected void ExpectWeak(int n, int follow)
         {
-            if (isKind(la, n)) Get();
+            if (isKind(la, n)) 
+				Get();
             else
             {
                 SynErr(n);
-                while (!StartOf(follow)) Get();
+                while (!StartOf(follow)) 
+					Get();
             }
         }
 
@@ -179,9 +192,9 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void Version‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(13); // T
+		addAlt(13); // T version
 		Expect(13); // version
-		addAlt(12); // T
+		addAlt(12); // T versionnumber
 		using(astbuilder.createMarker(null, null, false, true, false))
 		Expect(12); // versionnumber
 	}}
@@ -190,7 +203,7 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 		using(astbuilder.createBarrier(null))
 		{
 		while (!(isKind(la, 0) || isKind(la, 22))) {SynErr(73); Get();}
-		addAlt(22); // T
+		addAlt(22); // T "namespace"
 		Expect(22); // "namespace"
 		DottedIdent‿NT();
 	}}
@@ -199,9 +212,9 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 		using(astbuilder.createBarrier(null))
 		{
 		while (!(isKind(la, 0) || isKind(la, 23))) {SynErr(74); Get();}
-		addAlt(23); // T
+		addAlt(23); // T "readerwriterprefix"
 		Expect(23); // "readerwriterprefix"
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker(null, null, false, true, false))
 		Expect(1); // ident
 	}}
@@ -210,17 +223,17 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 		using(astbuilder.createBarrier(null))
 		{
 		while (!(isKind(la, 0) || isKind(la, 24))) {SynErr(75); Get();}
-		addAlt(24); // T
+		addAlt(24); // T "rootclass"
 		using(astbuilder.createMarker("typ", null, false, true, false))
 		Expect(24); // "rootclass"
-		addAlt(25); // T
+		addAlt(25); // T "data"
 		using(astbuilder.createMarker("name", null, false, true, false))
 		Expect(25); // "data"
 		using(astbuilder.createMarker("properties", null, true, false, false))
 		Properties‿NT();
-		addAlt(8); // T
+		addAlt(8); // T end
 		Expect(8); // end
-		addAlt(26); // T
+		addAlt(26); // T "class"
 		Expect(26); // "class"
 	}}
 
@@ -228,12 +241,12 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 		using(astbuilder.createBarrier(null))
 		{
 		while (!(isKind(la, 0) || isKind(la, 26))) {SynErr(76); Get();}
-		addAlt(26); // T
+		addAlt(26); // T "class"
 		using(astbuilder.createMarker("typ", null, false, true, false))
 		Expect(26); // "class"
-		if (!types.Add(la)) SemErr(71, la, string.Format(DuplicateSymbol, "ident", la.val, types.name));
+		if (!types.Add(la)) SemErr(71, string.Format(DuplicateSymbol, "ident", la.val, types.name), la);
 		alternatives.tdeclares = types;
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker("name", null, false, true, false))
 		Expect(1); // ident
 		addAlt(6); // OPT
@@ -253,9 +266,9 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 		}
 		using(astbuilder.createMarker("properties", null, true, false, false))
 		Properties‿NT();
-		addAlt(8); // T
+		addAlt(8); // T end
 		Expect(8); // end
-		addAlt(26); // T
+		addAlt(26); // T "class"
 		Expect(26); // "class"
 	}}
 
@@ -263,43 +276,43 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 		using(astbuilder.createBarrier(null))
 		{
 		while (!(isKind(la, 0) || isKind(la, 62))) {SynErr(77); Get();}
-		addAlt(62); // T
+		addAlt(62); // T "subsystem"
 		Expect(62); // "subsystem"
-		if (!types.Add(la)) SemErr(71, la, string.Format(DuplicateSymbol, "ident", la.val, types.name));
+		if (!types.Add(la)) SemErr(71, string.Format(DuplicateSymbol, "ident", la.val, types.name), la);
 		alternatives.tdeclares = types;
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker("name", null, false, true, false))
 		Expect(1); // ident
-		addAlt(63); // T
+		addAlt(63); // T "ssname"
 		Expect(63); // "ssname"
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker("ssname", null, false, true, false))
 		Expect(1); // ident
-		addAlt(64); // T
+		addAlt(64); // T "ssconfig"
 		Expect(64); // "ssconfig"
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker("ssconfig", null, false, true, false))
 		Expect(1); // ident
-		addAlt(65); // T
+		addAlt(65); // T "sstyp"
 		Expect(65); // "sstyp"
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker("sstyp", null, false, true, false))
 		Expect(1); // ident
-		addAlt(66); // T
+		addAlt(66); // T "sscommands"
 		Expect(66); // "sscommands"
 		using(astbuilder.createMarker("sscommands", null, true, false, false))
 		SSCommands‿NT();
 		addAlt(67); // OPT
 		if (isKind(la, 67)) {
 			Get();
-			addAlt(5); // T
+			addAlt(5); // T string
 			using(astbuilder.createMarker("sskey", null, false, true, true))
 			Expect(5); // string
 		}
 		addAlt(68); // OPT
 		if (isKind(la, 68)) {
 			Get();
-			addAlt(5); // T
+			addAlt(5); // T string
 			using(astbuilder.createMarker("ssclear", null, false, true, true))
 			Expect(5); // string
 		}
@@ -309,9 +322,9 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 			InfoProperty‿NT();
 			addAlt(30); // ITER end
 		}
-		addAlt(8); // T
+		addAlt(8); // T end
 		Expect(8); // end
-		addAlt(62); // T
+		addAlt(62); // T "subsystem"
 		Expect(62); // "subsystem"
 	}}
 
@@ -319,17 +332,17 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 		using(astbuilder.createBarrier(null))
 		{
 		while (!(isKind(la, 0) || isKind(la, 70))) {SynErr(78); Get();}
-		addAlt(70); // T
+		addAlt(70); // T "enum"
 		Expect(70); // "enum"
-		if (!enumtypes.Add(la)) SemErr(71, la, string.Format(DuplicateSymbol, "ident", la.val, enumtypes.name));
+		if (!enumtypes.Add(la)) SemErr(71, string.Format(DuplicateSymbol, "ident", la.val, enumtypes.name), la);
 		alternatives.tdeclares = enumtypes;
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker(null, null, false, true, false))
 		Expect(1); // ident
 		EnumValues‿NT();
-		addAlt(8); // T
+		addAlt(8); // T end
 		Expect(8); // end
-		addAlt(70); // T
+		addAlt(70); // T "enum"
 		Expect(70); // "enum"
 	}}
 
@@ -337,11 +350,11 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 		using(astbuilder.createBarrier(null))
 		{
 		while (!(isKind(la, 0) || isKind(la, 69))) {SynErr(79); Get();}
-		addAlt(69); // T
+		addAlt(69); // T "flags"
 		Expect(69); // "flags"
-		if (!types.Add(la)) SemErr(71, la, string.Format(DuplicateSymbol, "ident", la.val, types.name));
+		if (!types.Add(la)) SemErr(71, string.Format(DuplicateSymbol, "ident", la.val, types.name), la);
 		alternatives.tdeclares = types;
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker(null, null, false, true, false))
 		Expect(1); // ident
 		addAlt(1); // ITER start
@@ -349,18 +362,18 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 			EnumValue‿NT();
 			addAlt(1); // ITER end
 		}
-		addAlt(8); // T
+		addAlt(8); // T end
 		Expect(8); // end
-		addAlt(69); // T
+		addAlt(69); // T "flags"
 		Expect(69); // "flags"
 	}}
 
 	void EndNamespace‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(8); // T
+		addAlt(8); // T end
 		Expect(8); // end
-		addAlt(22); // T
+		addAlt(22); // T "namespace"
 		Expect(22); // "namespace"
 	}}
 
@@ -371,18 +384,18 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 		if (isKind(la, 2)) {
 			using(astbuilder.createMarker(null, null, false, true, false))
 			Get();
-			addAlt(9); // T
+			addAlt(9); // T dot
 			Expect(9); // dot
 			addAlt(2); // ITER start
 			while (isKind(la, 2)) {
 				using(astbuilder.createMarker(null, null, false, true, false))
 				Get();
-				addAlt(9); // T
+				addAlt(9); // T dot
 				Expect(9); // dot
 				addAlt(2); // ITER end
 			}
 		}
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker(null, null, false, true, false))
 		Expect(1); // ident
 	}}
@@ -393,17 +406,17 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 		addAlt(2); // OPT
 		if (isKind(la, 2)) {
 			Get();
-			addAlt(9); // T
+			addAlt(9); // T dot
 			Expect(9); // dot
 			addAlt(2); // ITER start
 			while (isKind(la, 2)) {
 				Get();
-				addAlt(9); // T
+				addAlt(9); // T dot
 				Expect(9); // dot
 				addAlt(2); // ITER end
 			}
 		}
-		addAlt(1); // T
+		addAlt(1); // T ident
 		Expect(1); // ident
 	}}
 
@@ -420,7 +433,7 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void Title‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(6); // T
+		addAlt(6); // T braced
 		using(astbuilder.createMarker(null, null, false, true, false))
 		Expect(6); // braced
 	}}
@@ -428,7 +441,7 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void Inherits‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(28); // T
+		addAlt(28); // T "inherits"
 		Expect(28); // "inherits"
 		DottedIdent‿NT();
 	}}
@@ -436,7 +449,7 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void Via‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(27); // T
+		addAlt(27); // T "via"
 		Expect(27); // "via"
 		DottedIdent‿NT();
 	}}
@@ -501,10 +514,10 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void Property‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(29); // T
+		addAlt(29); // T "property"
 		using(astbuilder.createMarker("writeable", "t", false, true, false))
 		Expect(29); // "property"
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker("name", null, false, true, false))
 		Expect(1); // ident
 		using(astbuilder.createMarker("type", null, false, false, false))
@@ -514,10 +527,10 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void InfoProperty‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(30); // T
+		addAlt(30); // T "infoproperty"
 		using(astbuilder.createMarker("writeable", "f", false, true, false))
 		Expect(30); // "infoproperty"
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker("name", null, false, true, false))
 		Expect(1); // ident
 		using(astbuilder.createMarker("type", null, false, false, false))
@@ -527,11 +540,11 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void APProperty‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(31); // T
+		addAlt(31); // T "approperty"
 		using(astbuilder.createMarker("writeable", "t", false, true, false))
 		using(astbuilder.createMarker("autopostback", "t", false, true, false))
 		Expect(31); // "approperty"
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker("name", null, false, true, false))
 		Expect(1); // ident
 		using(astbuilder.createMarker("type", null, false, false, false))
@@ -541,10 +554,10 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void List‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(32); // T
+		addAlt(32); // T "list"
 		using(astbuilder.createMarker("list", "t", false, true, false))
 		Expect(32); // "list"
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker("name", null, false, true, false))
 		Expect(1); // ident
 		addAlt(41); // OPT
@@ -557,11 +570,11 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void SelectList‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(33); // T
+		addAlt(33); // T "selectlist"
 		using(astbuilder.createMarker("list", "t", false, true, false))
 		using(astbuilder.createMarker("select", "t", false, true, false))
 		Expect(33); // "selectlist"
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker("name", null, false, true, false))
 		Expect(1); // ident
 		using(astbuilder.createMarker("type", null, false, false, false))
@@ -571,11 +584,11 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void FlagsList‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(34); // T
+		addAlt(34); // T "flagslist"
 		using(astbuilder.createMarker("list", "t", false, true, false))
 		using(astbuilder.createMarker("flags", "t", false, true, false))
 		Expect(34); // "flagslist"
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker("name", null, false, true, false))
 		Expect(1); // ident
 		using(astbuilder.createMarker("type", null, false, false, false))
@@ -585,11 +598,11 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void LongProperty‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(35); // T
+		addAlt(35); // T "longproperty"
 		using(astbuilder.createMarker("writeable", "t", false, true, false))
 		using(astbuilder.createMarker("long", "t", false, true, false))
 		Expect(35); // "longproperty"
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker("name", null, false, true, false))
 		Expect(1); // ident
 	}}
@@ -597,11 +610,11 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void InfoLongProperty‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(36); // T
+		addAlt(36); // T "infolongproperty"
 		using(astbuilder.createMarker("writeable", "f", false, true, false))
 		using(astbuilder.createMarker("long", "t", false, true, false))
 		Expect(36); // "infolongproperty"
-		addAlt(1); // T
+		addAlt(1); // T ident
 		using(astbuilder.createMarker("name", null, false, true, false))
 		Expect(1); // ident
 	}}
@@ -636,7 +649,7 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void As‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(41); // T
+		addAlt(41); // T "as"
 		Expect(41); // "as"
 		addAlt(set0, 5); // ALT
 		addAlt(1); // ALT
@@ -645,7 +658,7 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 		if (StartOf(5)) {
 			BaseType‿NT();
 		} else if (isKind(la, 1)) {
-			if (!types.Use(la, alternatives)) SemErr(72, la, string.Format(MissingSymbol, "ident", la.val, types.name));
+			if (!types.Use(la, alternatives)) SemErr(72, string.Format(MissingSymbol, "ident", la.val, types.name), la);
 			using(astbuilder.createMarker("basic", null, false, true, false))
 			Get();
 		} else if (isKind(la, 1) || isKind(la, 2)) {
@@ -657,7 +670,7 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void Mimics‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(57); // T
+		addAlt(57); // T "mimics"
 		using(astbuilder.createMarker("basic", "String", false, true, false))
 		Expect(57); // "mimics"
 		addAlt(set0, 6); // ALT
@@ -667,7 +680,7 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 			using(astbuilder.createMarker("mimicsspec", null, false, false, false))
 			MimicsSpec‿NT();
 		} else if (isKind(la, 1)) {
-			if (!enumtypes.Use(la, alternatives)) SemErr(72, la, string.Format(MissingSymbol, "ident", la.val, enumtypes.name));
+			if (!enumtypes.Use(la, alternatives)) SemErr(72, string.Format(MissingSymbol, "ident", la.val, enumtypes.name), la);
 			using(astbuilder.createMarker("mimicsspec", null, false, true, false))
 			using(astbuilder.createMarker("enum", "t", false, true, false))
 			Get();
@@ -723,7 +736,7 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 				Get();
 				addAlt(set0, 7); // ITER end
 			}
-			addAlt(40); // T
+			addAlt(40); // T "#"
 			Expect(40); // "#"
 			break;
 		}
@@ -749,7 +762,7 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void SampleValue‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(6); // T
+		addAlt(6); // T braced
 		using(astbuilder.createMarker(null, null, false, true, true))
 		Expect(6); // braced
 	}}
@@ -758,7 +771,7 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 		using(astbuilder.createBarrier(null))
 		{
 		DottedIdentBare‿NT();
-		addAlt(7); // T
+		addAlt(7); // T bracketed
 		Expect(7); // bracketed
 	}}
 
@@ -906,17 +919,17 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void Query‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(58); // T
+		addAlt(58); // T "query"
 		Expect(58); // "query"
-		addAlt(11); // T
+		addAlt(11); // T colon
 		Expect(11); // colon
-		addAlt(2); // T
+		addAlt(2); // T dottedident
 		Expect(2); // dottedident
-		addAlt(9); // T
+		addAlt(9); // T dot
 		Expect(9); // dot
-		addAlt(1); // T
+		addAlt(1); // T ident
 		Expect(1); // ident
-		addAlt(11); // T
+		addAlt(11); // T colon
 		Expect(11); // colon
 		StringOrIdent‿NT();
 	}}
@@ -924,17 +937,17 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void Txt‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(59); // T
+		addAlt(59); // T "txt"
 		Expect(59); // "txt"
-		addAlt(11); // T
+		addAlt(11); // T colon
 		Expect(11); // colon
-		addAlt(2); // T
+		addAlt(2); // T dottedident
 		Expect(2); // dottedident
-		addAlt(9); // T
+		addAlt(9); // T dot
 		Expect(9); // dot
-		addAlt(1); // T
+		addAlt(1); // T ident
 		Expect(1); // ident
-		addAlt(11); // T
+		addAlt(11); // T colon
 		Expect(11); // colon
 		StringOrIdent‿NT();
 	}}
@@ -942,17 +955,17 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void XL‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(60); // T
+		addAlt(60); // T "xl"
 		Expect(60); // "xl"
-		addAlt(11); // T
+		addAlt(11); // T colon
 		Expect(11); // colon
-		addAlt(2); // T
+		addAlt(2); // T dottedident
 		Expect(2); // dottedident
-		addAlt(9); // T
+		addAlt(9); // T dot
 		Expect(9); // dot
-		addAlt(1); // T
+		addAlt(1); // T ident
 		Expect(1); // ident
-		addAlt(11); // T
+		addAlt(11); // T colon
 		Expect(11); // colon
 		StringOrIdent‿NT();
 	}}
@@ -960,9 +973,9 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void Ref‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(61); // T
+		addAlt(61); // T "ref"
 		Expect(61); // "ref"
-		addAlt(11); // T
+		addAlt(11); // T colon
 		Expect(11); // colon
 		addAlt(19); // ALT
 		addAlt(20); // ALT
@@ -971,7 +984,7 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 		} else if (isKind(la, 20)) {
 			Get();
 		} else SynErr(88);
-		addAlt(11); // T
+		addAlt(11); // T colon
 		Expect(11); // colon
 		StringOrIdent‿NT();
 	}}
@@ -1026,7 +1039,7 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void EnumValue‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(1); // T
+		addAlt(1); // T ident
 		Expect(1); // ident
 		addAlt(37); // OPT
 		if (isKind(la, 37)) {
@@ -1042,7 +1055,7 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 			EnumValue‿NT();
 			addAlt(1); // ITER end
 		}
-		addAlt(71); // T
+		addAlt(71); // T "default"
 		Expect(71); // "default"
 		EnumValue‿NT();
 		addAlt(1); // ITER start
@@ -1055,9 +1068,9 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 	void EnumIntValue‿NT() {
 		using(astbuilder.createBarrier(null))
 		{
-		addAlt(37); // T
+		addAlt(37); // T "="
 		Expect(37); // "="
-		addAlt(4); // T
+		addAlt(4); // T int
 		Expect(4); // int
 	}}
 
@@ -1083,13 +1096,13 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 		};
 
 		// a token's name
-		public static readonly string[] tName = {
-		"EOF","ident","dottedident","number", "int","string","braced","bracketed", "\"end\"","\".\"","\"|\"","\":\"", "versionnumber","\"version\"","\"search\"","\"select\"", "\"details\"","\"edit\"","\"clear\"","\"keys\"",
-		"\"displayname\"","vbident","\"namespace\"","\"readerwriterprefix\"", "\"rootclass\"","\"data\"","\"class\"","\"via\"", "\"inherits\"","\"property\"","\"infoproperty\"","\"approperty\"", "\"list\"","\"selectlist\"","\"flagslist\"","\"longproperty\"", "\"infolongproperty\"","\"=\"","\"true\"","\"false\"",
-		"\"#\"","\"as\"","\"double\"","\"date\"", "\"datetime\"","\"integer\"","\"percent\"","\"percentwithdefault\"", "\"doublewithdefault\"","\"integerwithdefault\"","\"n2\"","\"n0\"", "\"string\"","\"boolean\"","\"guid\"","\"string()\"", "\"xml\"","\"mimics\"","\"query\"","\"txt\"",
-		"\"xl\"","\"ref\"","\"subsystem\"","\"ssname\"", "\"ssconfig\"","\"sstyp\"","\"sscommands\"","\"sskey\"", "\"ssclear\"","\"flags\"","\"enum\"","\"default\"", "???"
+		public static readonly string[] varTName = {
+		"[EOF]","[ident]","[dottedident]","[number]", "[int]","[string]","[braced]","[bracketed]", "end",".","|",":", "[versionnumber]","version","search","select", "details","edit","clear","keys",
+		"displayname","[vbident]","namespace","readerwriterprefix", "rootclass","data","class","via", "inherits","property","infoproperty","approperty", "list","selectlist","flagslist","longproperty", "infolongproperty","=","true","false",
+		"#","as","double","date", "datetime","integer","percent","percentwithdefault", "doublewithdefault","integerwithdefault","n2","n0", "string","boolean","guid","string()", "xml","mimics","query","txt",
+		"xl","ref","subsystem","ssname", "ssconfig","sstyp","sscommands","sskey", "ssclear","flags","enum","default", "[???]"
 		};
-		public override string NameOf(int tokenKind) => tName[tokenKind];
+		public override string NameOfTokenKind(int tokenKind) => varTName[tokenKind];
 
 		// states that a particular production (1st index) can start with a particular token (2nd index)
 		static readonly bool[,] set0 = {
@@ -1125,111 +1138,104 @@ if (t.kind == _string || t.kind == _braced || t.kind == _bracketed)
 
 
 
-		private class Errors : ErrorsBase
+		public override string Syntaxerror(int n) 
 		{
-			public override void SynErr(int line, int col, int n) 
+			switch (n) 
 			{
-				string s;
-				switch (n) 
-				{
-			case 0: s = "EOF expected"; break;
-			case 1: s = "ident expected"; break;
-			case 2: s = "dottedident expected"; break;
-			case 3: s = "number expected"; break;
-			case 4: s = "int expected"; break;
-			case 5: s = "string expected"; break;
-			case 6: s = "braced expected"; break;
-			case 7: s = "bracketed expected"; break;
-			case 8: s = "end expected"; break;
-			case 9: s = "dot expected"; break;
-			case 10: s = "bar expected"; break;
-			case 11: s = "colon expected"; break;
-			case 12: s = "versionnumber expected"; break;
-			case 13: s = "version expected"; break;
-			case 14: s = "search expected"; break;
-			case 15: s = "select expected"; break;
-			case 16: s = "details expected"; break;
-			case 17: s = "edit expected"; break;
-			case 18: s = "clear expected"; break;
-			case 19: s = "keys expected"; break;
-			case 20: s = "displayname expected"; break;
-			case 21: s = "vbident expected"; break;
-			case 22: s = "\"namespace\" expected"; break;
-			case 23: s = "\"readerwriterprefix\" expected"; break;
-			case 24: s = "\"rootclass\" expected"; break;
-			case 25: s = "\"data\" expected"; break;
-			case 26: s = "\"class\" expected"; break;
-			case 27: s = "\"via\" expected"; break;
-			case 28: s = "\"inherits\" expected"; break;
-			case 29: s = "\"property\" expected"; break;
-			case 30: s = "\"infoproperty\" expected"; break;
-			case 31: s = "\"approperty\" expected"; break;
-			case 32: s = "\"list\" expected"; break;
-			case 33: s = "\"selectlist\" expected"; break;
-			case 34: s = "\"flagslist\" expected"; break;
-			case 35: s = "\"longproperty\" expected"; break;
-			case 36: s = "\"infolongproperty\" expected"; break;
-			case 37: s = "\"=\" expected"; break;
-			case 38: s = "\"true\" expected"; break;
-			case 39: s = "\"false\" expected"; break;
-			case 40: s = "\"#\" expected"; break;
-			case 41: s = "\"as\" expected"; break;
-			case 42: s = "\"double\" expected"; break;
-			case 43: s = "\"date\" expected"; break;
-			case 44: s = "\"datetime\" expected"; break;
-			case 45: s = "\"integer\" expected"; break;
-			case 46: s = "\"percent\" expected"; break;
-			case 47: s = "\"percentwithdefault\" expected"; break;
-			case 48: s = "\"doublewithdefault\" expected"; break;
-			case 49: s = "\"integerwithdefault\" expected"; break;
-			case 50: s = "\"n2\" expected"; break;
-			case 51: s = "\"n0\" expected"; break;
-			case 52: s = "\"string\" expected"; break;
-			case 53: s = "\"boolean\" expected"; break;
-			case 54: s = "\"guid\" expected"; break;
-			case 55: s = "\"string()\" expected"; break;
-			case 56: s = "\"xml\" expected"; break;
-			case 57: s = "\"mimics\" expected"; break;
-			case 58: s = "\"query\" expected"; break;
-			case 59: s = "\"txt\" expected"; break;
-			case 60: s = "\"xl\" expected"; break;
-			case 61: s = "\"ref\" expected"; break;
-			case 62: s = "\"subsystem\" expected"; break;
-			case 63: s = "\"ssname\" expected"; break;
-			case 64: s = "\"ssconfig\" expected"; break;
-			case 65: s = "\"sstyp\" expected"; break;
-			case 66: s = "\"sscommands\" expected"; break;
-			case 67: s = "\"sskey\" expected"; break;
-			case 68: s = "\"ssclear\" expected"; break;
-			case 69: s = "\"flags\" expected"; break;
-			case 70: s = "\"enum\" expected"; break;
-			case 71: s = "\"default\" expected"; break;
-			case 72: s = "??? expected"; break;
-			case 73: s = "this symbol not expected in Namespace"; break;
-			case 74: s = "this symbol not expected in ReaderWriterPrefix"; break;
-			case 75: s = "this symbol not expected in RootClass"; break;
-			case 76: s = "this symbol not expected in Class"; break;
-			case 77: s = "this symbol not expected in SubSystem"; break;
-			case 78: s = "this symbol not expected in Enum"; break;
-			case 79: s = "this symbol not expected in Flags"; break;
-			case 80: s = "this symbol not expected in Prop"; break;
-			case 81: s = "invalid Prop"; break;
-			case 82: s = "invalid Type"; break;
-			case 83: s = "invalid As"; break;
-			case 84: s = "invalid Mimics"; break;
-			case 85: s = "invalid InitValue"; break;
-			case 86: s = "invalid BaseType"; break;
-			case 87: s = "invalid MimicsSpec"; break;
-			case 88: s = "invalid Ref"; break;
-			case 89: s = "invalid StringOrIdent"; break;
-			case 90: s = "invalid SSCommand"; break;
-
-					default: s = "error " + n; break;
-				}
-				// public void Add(int id, int level, int line, int col, string message)
-				Add(SynErrOffset + n, ErrorLevel, line, col, s);
+				case 0: return "[EOF] expected";
+				case 1: return "[ident] expected";
+				case 2: return "[dottedident] expected";
+				case 3: return "[number] expected";
+				case 4: return "[int] expected";
+				case 5: return "[string] expected";
+				case 6: return "[braced] expected";
+				case 7: return "[bracketed] expected";
+				case 8: return "end expected";
+				case 9: return ". expected";
+				case 10: return "| expected";
+				case 11: return ": expected";
+				case 12: return "[versionnumber] expected";
+				case 13: return "version expected";
+				case 14: return "search expected";
+				case 15: return "select expected";
+				case 16: return "details expected";
+				case 17: return "edit expected";
+				case 18: return "clear expected";
+				case 19: return "keys expected";
+				case 20: return "displayname expected";
+				case 21: return "[vbident] expected";
+				case 22: return "namespace expected";
+				case 23: return "readerwriterprefix expected";
+				case 24: return "rootclass expected";
+				case 25: return "data expected";
+				case 26: return "class expected";
+				case 27: return "via expected";
+				case 28: return "inherits expected";
+				case 29: return "property expected";
+				case 30: return "infoproperty expected";
+				case 31: return "approperty expected";
+				case 32: return "list expected";
+				case 33: return "selectlist expected";
+				case 34: return "flagslist expected";
+				case 35: return "longproperty expected";
+				case 36: return "infolongproperty expected";
+				case 37: return "= expected";
+				case 38: return "true expected";
+				case 39: return "false expected";
+				case 40: return "# expected";
+				case 41: return "as expected";
+				case 42: return "double expected";
+				case 43: return "date expected";
+				case 44: return "datetime expected";
+				case 45: return "integer expected";
+				case 46: return "percent expected";
+				case 47: return "percentwithdefault expected";
+				case 48: return "doublewithdefault expected";
+				case 49: return "integerwithdefault expected";
+				case 50: return "n2 expected";
+				case 51: return "n0 expected";
+				case 52: return "string expected";
+				case 53: return "boolean expected";
+				case 54: return "guid expected";
+				case 55: return "string() expected";
+				case 56: return "xml expected";
+				case 57: return "mimics expected";
+				case 58: return "query expected";
+				case 59: return "txt expected";
+				case 60: return "xl expected";
+				case 61: return "ref expected";
+				case 62: return "subsystem expected";
+				case 63: return "ssname expected";
+				case 64: return "ssconfig expected";
+				case 65: return "sstyp expected";
+				case 66: return "sscommands expected";
+				case 67: return "sskey expected";
+				case 68: return "ssclear expected";
+				case 69: return "flags expected";
+				case 70: return "enum expected";
+				case 71: return "default expected";
+				case 72: return "[???] expected";
+				case 73: return "symbol not expected in Namespace (SYNC error)";
+				case 74: return "symbol not expected in ReaderWriterPrefix (SYNC error)";
+				case 75: return "symbol not expected in RootClass (SYNC error)";
+				case 76: return "symbol not expected in Class (SYNC error)";
+				case 77: return "symbol not expected in SubSystem (SYNC error)";
+				case 78: return "symbol not expected in Enum (SYNC error)";
+				case 79: return "symbol not expected in Flags (SYNC error)";
+				case 80: return "symbol not expected in Prop (SYNC error)";
+				case 81: return "invalid Prop, expected property infoproperty approperty list selectlist flagslist longproperty infolongproperty";
+				case 82: return "invalid Type, expected [braced] end property infoproperty approperty list selectlist flagslist longproperty infolongproperty = as mimics";
+				case 83: return "invalid As, expected double date datetime integer percent percentwithdefault doublewithdefault integerwithdefault n2 n0 string boolean guid string() xml [ident] [dottedident]";
+				case 84: return "invalid Mimics, expected query txt xl ref [ident]";
+				case 85: return "invalid InitValue, expected [number] [int] [string] true false # [ident] [dottedident]";
+				case 86: return "invalid BaseType, expected double date datetime integer percent percentwithdefault doublewithdefault integerwithdefault n2 n0 string boolean guid string() xml";
+				case 87: return "invalid MimicsSpec, expected query txt xl ref";
+				case 88: return "invalid Ref, expected keys displayname";
+				case 89: return "invalid StringOrIdent, expected [string] [ident] [dottedident]";
+				case 90: return "invalid SSCommand, expected search select details edit clear";
+				default: return $"error {n}";
 			}
-		} // Errors
+		}
 
 	} // end Parser
 

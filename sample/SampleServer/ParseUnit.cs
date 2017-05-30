@@ -108,19 +108,14 @@ namespace SampleServer
         {
             lock (this)
             {
-                var maxLine1 = LinesOf(sourcecode).Count();
-
-                var b = System.Text.Encoding.UTF8.GetBytes(sourcecode.ToString());
                 var sb = new System.Text.StringBuilder();
-
                 using (var w = new System.IO.StringWriter(sb))
-                using (var s = new System.IO.MemoryStream(b))
                 {
-                    var scanner = CocoRCore.Samples.WFModel.Scanner.Create(s, true); // it's BOM free but UTF8
+                    var scanner = new CocoRCore.Samples.WFModel.Scanner().Initialize(sourcecode, Uri.ToString());
                     parser = new CocoRCore.Samples.WFModel.Parser(scanner);
                     parser.errors.errorStream = w;
                     parser.Parse();
-                    w.WriteLine("\n{0:n0} error(s) detected in {1}", parser.errors.CountError, Uri);
+                    w.WriteLine("\n{0:f} detected in {1}", parser.errors, Uri);
                     PublishDiagnostics(parser.errors);
                 }
                 JsonRpc.Tracer.Do(3, (tw) => tw.WriteLine(sb.ToString()));
@@ -216,24 +211,23 @@ namespace SampleServer
             {
                 if (a.alt[i])
                 {
-                    var kind = parser.NameOf(i);
+                    var kind = parser.NameOfTokenKind(i);
                     var st = a.st[i];
                     if (st == null)
                     {
-                        if (kind.StartsWith("\""))
+                        if (!kind.StartsWith("["))
                         { 
-                            var kw = kind.Substring(1, kind.Length - 2);
-                            yield return CreateCompletionItem("{0} - {1}", kw, CompletionItemKind.Keyword, null);
+                            yield return CreateCompletionItem("{0} - {1}", kind, CompletionItemKind.Keyword, null);
                         }
                         else
                         {
-                            yield return CreateCompletionItem("({0}) structure", kind, CompletionItemKind.Text, null);
+                            yield return CreateCompletionItem("{0} literal", kind, CompletionItemKind.Text, null);
                         }
                     }
                     else
                     {
                         foreach(var t in st.items)
-                            yield return CreateCompletionItem("{0} - {2} symbol", t.val, CompletionItemKind.Reference, st.name);
+                            yield return CreateCompletionItem("{0} - {2} symbol", t.valScanned, CompletionItemKind.Reference, st.name);
                     }
                 }
             }
