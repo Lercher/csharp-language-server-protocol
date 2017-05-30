@@ -32,12 +32,12 @@ namespace SampleServer
             return new Location() { Range = t.ToRange(), Uri = inFile };
         }
 
-        public static Position ToPosition(this CocoRCore.Position p, int colOffset) => new Position(p.line - 1, p.col - 1 + colOffset);
+        public static Position ToPosition(this CocoRCore.Position p) => new Position(p.line - 1, p.col - 1);
 
         public static Range ToRange(this CocoRCore.Token t)
         {
-            var start = t.position.ToPosition(colOffset: 0);
-            var end = t.endPosition.ToPosition(colOffset: 1);
+            var start = t.position.ToPosition();
+            var end = t.endPosition.ToPosition();
             return new Range(start, end);
         }
 
