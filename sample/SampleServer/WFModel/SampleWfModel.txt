@@ -161,13 +161,13 @@ Class SelbstauskunftClass
     Property Beschäftigt_Ort
     Property Staatsangehörigkeit Mimics Laender = "Deutschland"
     Property In_Deutschland_lebend_seit as Date { #12/01/2000# }
-    Property Aufenthaltsdauer_unbegrenzt Mimics NeinJa
+    Property Aufenthaltsdauer_unbegrenzt Mimics NeinOderJa
     Property Aufenthaltsdauer_bis as Date
-    Property NeinJa Mimics NeinJa
+    Property NeinJa Mimics NeinOderJa
     Property Arbeitserlaubnis_bis as Date
-    Property Schufaeinwilligung_erteilt Mimics NeinJa
+    Property Schufaeinwilligung_erteilt Mimics NeinOderJa
     Property Nettoeinkommen_mtl as Double {123456.00}
-    Property Wohneigentum Mimics NeinJa
+    Property Wohneigentum Mimics NeinOderJa
     Property MieteHypothek as Double {700.00}
     Property MonatlicheVerpflichtungen as Double {200.00}
 End Class
@@ -202,7 +202,7 @@ Class Parameter
     InfoProperty Vertragsbeginn Mimics Vertragsbeginne
     InfoProperty VertragsartFix = "Nein"
     InfoProperty BeschriftungAnsprechpartner2 = "Nein"
-    InfoProperty NurPrivatkunden Mimics NeinJa = "Nein"
+    InfoProperty NurPrivatkunden Mimics NeinOderJa = "Nein"
     InfoProperty Logo = "leer.png"
     InfoProperty Minimalbetrag as Double = 0.0
     InfoProperty Maximalbetrag as Double = 15000.0
@@ -339,7 +339,7 @@ Class Objekt
 	Property AnzahlFahrräder as Integer = 0
 	Property imgurl
 	Property AnzahlServiceintervalle as Integer = 0
-	Property Arbeitgeberfinanzierung Mimics NeinJa
+	Property Arbeitgeberfinanzierung Mimics NeinOderJa
 	Property ArbeitnehmerVorname
 	Property ArbeitnehmerNachname
 	InfoProperty ArbeitnehmerVollname
@@ -379,13 +379,13 @@ End Class
 
 Class Zuordnen
 	Property Kundennummer
-	Property KundeNeu Mimics NeinJa
+	Property KundeNeu Mimics NeinOderJa
 	Property Nutzerdatennummer
-	Property NutzerdatenNeu Mimics NeinJa
+	Property NutzerdatenNeu Mimics NeinOderJa
 	Property Lieferantennummer
-	Property LieferantNeu Mimics NeinJa
+	Property LieferantNeu Mimics NeinOderJa
 	Property ProvisionsempfängerEMail
-	Property IstVermittler Mimics NeinJa
+	Property IstVermittler Mimics NeinOderJa
 	Property Login
 	Property Uebernahmedatum as Date
 End Class
@@ -528,7 +528,7 @@ Enum JaNein
     Nein = 0
 End Enum
 
-Enum NeinJa
+Enum NeinOderJa
     Ja = 1
     DEFAULT Nein = 0
 End Enum

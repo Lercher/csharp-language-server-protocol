@@ -21,7 +21,7 @@ namespace SampleServer
             return t.position.IsBefore(pl1, pc1) && t.endPosition.IsAfter(pl1, pc1);
         }
 
-        public static CocoRCore.Alternative LookingAt(this CocoRCore.ParserBase parser, Position p) => parser.tokens.Where(a => a.t.IsAt(p)).FirstOrDefault();
+        public static CocoRCore.Alternative LookingAt(this CocoRCore.ParserBase parser, Position p) => parser.AlternativeTokens.FirstOrDefault(a => a.t.IsAt(p));
         public static bool IsBefore(this CocoRCore.Position pt, int line1, int col1) => pt.line < line1 || pt.line == line1 && pt.col <= col1;
         public static bool IsAfter (this CocoRCore.Position pt, int line1, int col1) => pt.line > line1 || pt.line == line1 && pt.col > col1;
         public static Location ToLocation(this CocoRCore.Token t, Uri inFile) => new Location() { Range = t.ToRange(), Uri = inFile };
@@ -32,29 +32,26 @@ namespace SampleServer
         public static IEnumerable<string> DescribeFor(this CocoRCore.Alternative a, CocoRCore.ParserBase parser)
         {
             yield return a.t.DescribeFor(parser);
-            if (!string.IsNullOrEmpty(a.declares)) yield return string.Format("declares a{1} `{0}` symbol", a.declares, isVowel(a.declares) ? "n" : "");
-            if (!string.IsNullOrEmpty(a.declared)) yield return string.Format("references a{1} `{0}` symbol", a.declared, isVowel(a.declared) ? "n" : "");
+            if (!string.IsNullOrEmpty(a.declares)) yield return string.Format("declares a{1} `{0}` symbol", a.declares, IsVowel(a.declares) ? "n" : "");
+            if (!string.IsNullOrEmpty(a.references)) yield return string.Format("references a{1} `{0}` symbol", a.references, IsVowel(a.references) ? "n" : "");
+
+
+            foreach (var st in a.symbols)
+            {                
+                var ast = string.Format("**Valid `{0}`**\n\n{1}", st.Name, string.Join("  \n  ", st.Items.ToArray()));
+                yield return ast;
+            }
 
             var altKWs = new List<string>();
-            for(var i = 0; i < a.alt.Length; i++)
+            for (var i = 0; i < a.alt.Length; i++)
             {
                 if (a.alt[i])
                 {
                     var kind = parser.NameOfTokenKind(i);
-                    var st = a.st[i];
-                    if (st == null)
-                    {
-                        if (kind.StartsWith("["))
-                            altKWs.Add(kind);
-                        else
-                            altKWs.Add($"`{kind}`");
-                    }
+                    if (kind.StartsWith("["))
+                        altKWs.Add(kind);
                     else
-                    {
-                        var qy = from t in st.items select t.valScanned;
-                        var ast = string.Format("**Valid `{0}`**\n\n{1}", st.name, string.Join("  \n  ", qy.ToArray()));
-                        yield return ast;
-                    }
+                        altKWs.Add($"`{kind}`");
                 }
             }
             if (altKWs.Any())
@@ -65,7 +62,7 @@ namespace SampleServer
 
         }
 
-        private static bool isVowel(string s)
+        private static bool IsVowel(string s)
         {          
             if (string.IsNullOrWhiteSpace(s))
                 return false;

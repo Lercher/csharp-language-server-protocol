@@ -9,7 +9,7 @@ namespace SampleServer
 {
     public class ParseUnit : Lsp.Models.TextDocumentIdentifier
     {
-        public CocoRCore.ParserBase parser { get; private set; }
+        public CocoRCore.ParserBase Parser { get; private set; }
         private readonly System.Text.StringBuilder sourcecode = new System.Text.StringBuilder();
         private readonly ILanguageServer _router;
 
@@ -111,12 +111,11 @@ namespace SampleServer
                 var sb = new System.Text.StringBuilder();
                 using (var w = new System.IO.StringWriter(sb))
                 {
-                    var scanner = new CocoRCore.Samples.WFModel.Scanner().Initialize(sourcecode, Uri.ToString());
-                    parser = new CocoRCore.Samples.WFModel.Parser(scanner);
-                    parser.errors.errorStream = w;
-                    parser.Parse();
-                    w.WriteLine("\n{0:f} detected in {1}", parser.errors, Uri);
-                    PublishDiagnostics(parser.errors);
+                    Parser = CocoRCore.Samples.WFModel.Parser.Create(scanner => scanner.Initialize(sourcecode, Uri.ToString()));
+                    Parser.errors.Writer = w;
+                    Parser.Parse();
+                    w.WriteLine("\n{0:f} detected in {1}", Parser.errors, Uri);
+                    PublishDiagnostics(Parser.errors);
                 }
                 JsonRpc.Tracer.Do(3, (tw) => tw.WriteLine(sb.ToString()));
             }
@@ -124,25 +123,24 @@ namespace SampleServer
 
         private void PublishDiagnostics(IEnumerable<CocoRCore.Diagnostic> errors)
         {
-            var qy = 
+            var qy =
                 from e in errors
                 select new Diagnostic() { Source = "Coco/R", Message = e.message, Range = e.ToRange(), Severity = DiagnosticSeverity.Error };
             var Diagnostics = new Container<Diagnostic>(qy);
             var publishDiagnosticsParams = new PublishDiagnosticsParams() { Diagnostics = Diagnostics, Uri = Uri };
             _router.PublishDiagnostics(publishDiagnosticsParams);
-
         }
 
         public Hover CreateHover(Position position)
         {
-            var alt = parser.LookingAt(position);
+            var alt = Parser.LookingAt(position);
             return CreateHover(alt);
         }
 
         public Hover CreateHover(CocoRCore.Alternative a)
         {
             if (a == null) return CreateHover(string.Empty);
-            return CreateHover(a.DescribeFor(parser), a.t.ToRange());
+            return CreateHover(a.DescribeFor(Parser), a.t.ToRange());
         }
 
         public Hover CreateHover(string s)
@@ -160,7 +158,7 @@ namespace SampleServer
 
         public LocationOrLocations CreateDefinitionLocation(Position position)
         {
-            var alt = parser.LookingAt(position);
+            var alt = Parser.LookingAt(position);
             if (alt?.declaration == null)
                 return new LocationOrLocations();
             else
@@ -169,7 +167,7 @@ namespace SampleServer
 
         public LocationContainer CreateReferenceLocations(Position position)
         {
-            var alt = parser.LookingAt(position);
+            var alt = Parser.LookingAt(position);
             if (alt != null)
             {
                 if (alt.declaration != null)
@@ -183,18 +181,18 @@ namespace SampleServer
         private LocationContainer CreateReferenceLocations(CocoRCore.Token declaration)
         {
             var decl = declaration.ToLocation(Uri);
-            var qy = 
-                from alt in parser.tokens
+            var qy =
+                from alt in Parser.AlternativeTokens
                 where alt.declaration == declaration
                 select alt.t.ToLocation(Uri);
             // vscode sorts this by linenumber, so we can use Append here
-            return new LocationContainer(qy.Append(decl)); 
+            return new LocationContainer(qy.Append(decl));
         }
 
         private RecentCompletionRequest _RecentCompletionRequest = null;
         public CompletionList CreateCompletionList(Position position)
         {
-            var alt = parser.LookingAt(position);
+            var alt = Parser.LookingAt(position);
             lock (this)
             {
                 if (RecentCompletionRequest.WasSuchARequestRecently(ref _RecentCompletionRequest, alt?.t))
@@ -207,30 +205,20 @@ namespace SampleServer
         {
             if (a == null) yield break;
 
-            for (var i = 0; i < a.alt.Length; i++)
+            for (var kind = 0; kind < a.alt.Length; kind++)
             {
-                if (a.alt[i])
+                if (a.alt[kind])
                 {
-                    var kind = parser.NameOfTokenKind(i);
-                    var st = a.st[i];
-                    if (st == null)
-                    {
-                        if (!kind.StartsWith("["))
-                        { 
-                            yield return CreateCompletionItem("{0} - {1}", kind, CompletionItemKind.Keyword, null);
-                        }
-                        else
-                        {
-                            yield return CreateCompletionItem("{0} literal", kind, CompletionItemKind.Text, null);
-                        }
-                    }
+                    var kindName = Parser.NameOfTokenKind(kind);
+                    if (!kindName.StartsWith("["))
+                        yield return CreateCompletionItem("{0} - {1}", kindName, CompletionItemKind.Keyword, null);
                     else
-                    {
-                        foreach(var t in st.items)
-                            yield return CreateCompletionItem("{0} - {2} symbol", t.valScanned, CompletionItemKind.Reference, st.name);
-                    }
+                        yield return CreateCompletionItem("{0} literal", kindName, CompletionItemKind.Text, null);
                 }
             }
+            foreach (var st in a.symbols)
+                foreach (var item in st.Items)
+                    yield return CreateCompletionItem("{0} - {2} symbol", item, CompletionItemKind.Reference, st.Name);
         }
 
 
@@ -246,9 +234,10 @@ namespace SampleServer
 
         public WorkspaceEdit CreateWorkspaceEdit(Position position, string newName)
         {
-            var alt = parser.LookingAt(position);
-            var dict = new Dictionary<Uri, IEnumerable<TextEdit>>();
-            dict[Uri] = RenameSymbol(alt, newName);
+            var alt = Parser.LookingAt(position);
+            var dict = new Dictionary<Uri, IEnumerable<TextEdit>> {
+                [Uri] = RenameSymbol(alt, newName)
+            };
             return new WorkspaceEdit() { Changes = dict };
         }
 
@@ -257,8 +246,8 @@ namespace SampleServer
             if (alt == null) yield break;
             var decl = alt.declaration ?? alt.t;
             yield return new TextEdit() { NewText = newName, Range = decl.ToRange() };
-            var qy = 
-                from a in parser.tokens
+            var qy =
+                from a in Parser.AlternativeTokens
                 where a.declaration == decl
                 select a.t.ToRange() into r
                 select new TextEdit() { NewText = newName, Range = r };
