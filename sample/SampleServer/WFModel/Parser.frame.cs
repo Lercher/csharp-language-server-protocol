@@ -1,4 +1,4 @@
-// This file has to be compiled and linked to a Coco/R generated parser.
+﻿// This file has to be compiled and linked to a Coco/R generated parser.
 // as a variant, you can reference the CocoRCore.dll/exe,
 // that includes this classes in a precompiled form.
 
@@ -376,13 +376,16 @@ namespace CocoRCore
     {
         public readonly int Kind;
         public readonly string Name;
-        public readonly string[] Items;
+        public IEnumerable<string> Items;
 
-        public FrozenSymboltable(int kind, string name, IEnumerable<string> items)
+        public FrozenSymboltable(int kind, string name, bool strict, IEnumerable<string> items)
         {
             Kind = kind;
             Name = name;
-            Items = items.ToArray();
+            if (strict)
+                Items = items.ToArray();
+            else
+                Items = items;
         }
     }
 
@@ -438,7 +441,7 @@ namespace CocoRCore
             return clone;
         }
 
-        public FrozenSymboltable Freeze(int kind) => new FrozenSymboltable(kind, name, from t in items select t.valScanned);
+        public FrozenSymboltable Freeze(int kind) => new FrozenSymboltable(kind, name, strict, from t in items select t.valScanned);
 
         private List<Alternative> fixuplist => parser.AlternativeTokens;
 
@@ -486,8 +489,7 @@ namespace CocoRCore
 
         public void Add(string s)
         {
-            var t = new Token.Builder()
-            {
+            var t = new Token.Builder() {
                 kind = -1,
                 position = Position.MinusOne
             };
@@ -564,8 +566,7 @@ namespace CocoRCore
 
         public IEnumerable<Token> items
         {
-            get
-            {
+            get {
                 if (scopes.Count == 1) return currentScope;
 
                 var all = new Symboltable(name, ignoreCase, true, parser);
@@ -697,8 +698,7 @@ namespace CocoRCore
 
         public override string ToString()
         {
-            var at0 = new Token.Builder()
-            {
+            var at0 = new Token.Builder() {
                 position = Position.MinusOne
             };
             return ToString(at0.Freeze());
@@ -807,8 +807,7 @@ namespace CocoRCore
 
             public override AST this[int i]
             {
-                get
-                {
+                get {
                     if (i < 0 || count <= i)
                         return AST.empty;
                     return list[i];
@@ -861,8 +860,7 @@ namespace CocoRCore
 
             public override AST this[string s]
             {
-                get
-                {
+                get {
                     if (!ht.ContainsKey(s))
                         return AST.empty;
                     return ht[s];
@@ -945,8 +943,7 @@ namespace CocoRCore
                     //if (name == null) Console.WriteLine(" [merge two unnamed to a single list]"); else Console.WriteLine(" [merge two named {0} to a single list]", name);
                     var list = new ASTList(ast);
                     list.merge(e.ast);
-                    var ret = new E()
-                    {
+                    var ret = new E() {
                         ast = list,
                         name = name
                     };
@@ -958,8 +955,7 @@ namespace CocoRCore
                     var obj = new ASTObject();
                     obj.add(this);
                     obj.add(e);
-                    var ret = new E()
-                    {
+                    var ret = new E() {
                         ast = obj
                     };
                     return ret;
@@ -1028,8 +1024,7 @@ namespace CocoRCore
             public void hatch(Token s, Token t, string literal, string name, bool islist)
             {
                 //System.Console.WriteLine(">> hatch token {0,-20} as {2,-10}, islist {3}, literal:{1} at {4},{5}.", t.val, literal, name, islist, t.line, t.col);
-                var e = new E()
-                {
+                var e = new E() {
                     ast = new ASTLiteral(literal ?? t.val)
                 };
                 e.ast.mergeStart(s);
@@ -1098,8 +1093,7 @@ namespace CocoRCore
                     e = new E();
                     var source = parser.scanner.buffer.GetBufferedString(s.position.Range(la));
                     source = source.Trim();
-                    e.ast = new ASTLiteral(source)
-                    {
+                    e.ast = new ASTLiteral(source) {
                         startToken = s,
                         endToken = t
                     };
