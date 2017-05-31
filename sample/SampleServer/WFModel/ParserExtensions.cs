@@ -23,7 +23,7 @@ namespace SampleServer
 
         public static CocoRCore.Alternative LookingAt(this CocoRCore.ParserBase parser, Position p) => parser.AlternativeTokens.FirstOrDefault(a => a.t.IsAt(p));
         public static bool IsBefore(this CocoRCore.Position pt, int line1, int col1) => pt.line < line1 || pt.line == line1 && pt.col <= col1;
-        public static bool IsAfter (this CocoRCore.Position pt, int line1, int col1) => pt.line > line1 || pt.line == line1 && pt.col > col1;
+        public static bool IsAfter (this CocoRCore.Position pt, int line1, int col1) => pt.line > line1 || pt.line == line1 && pt.col >= col1;
         public static Location ToLocation(this CocoRCore.Token t, Uri inFile) => new Location() { Range = t.ToRange(), Uri = inFile };
         public static Position ToPosition(this CocoRCore.Position p) => new Position(p.line - 1, p.col - 1);
         public static Range ToRange(this CocoRCore.Token t) => new Range(t.position.ToPosition(), t.endPosition.ToPosition());
